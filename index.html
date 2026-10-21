@@ -117,9 +117,10 @@ html,body{overflow-x:hidden}
 .meter{height:10px;background:var(--sunk);border-radius:99px;overflow:hidden}
 .meter span{display:block;height:100%;background:var(--accent);border-radius:99px}
 .foods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.food{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:10px;font-size:.88rem;text-align:left}
-.food span:first-child{min-width:0}
-.food .mono{color:var(--accent);font-weight:600;white-space:nowrap}
+.food{display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;text-align:left;min-width:0}
+.food b{font-size:.95rem;line-height:1.25;overflow-wrap:anywhere}
+.fp{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:.85rem;color:var(--muted)}
+.fg{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.95rem}
 .todayk{text-align:left;width:100%;font:inherit;color:inherit}
 .todayk .row{gap:20px}
 .cam{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3;max-width:100%}
@@ -648,7 +649,7 @@ function backupPanel(){
    <div class="row"><button class="btn small" id="exp" ${demo?"disabled":""}>Spara backup</button><label class="btn ghost small" for="imp" style="flex-direction:row;color:var(--accent)">Läs in backup<input id="imp" type="file" accept="application/json,.json" hidden></label></div></section>`;
 }
 /* ---------- Kost och träning ---------- */
-const FOODS=[["Ägg, 1 st",6],["Kyckling 100 g",30],["Proteinshake",25],["Valio kvarg laktosfri, 1 förp",17],["ProPud Päron & vanilj",20],["ProPud Strawberry",20],["Keso 100 g",11],["Halloumi, 1 skiva",5],["Avokado, 1 hel",3],["Potatis, 1 st",2]];
+const FOODS=[["Ägg","1 st",6],["Kyckling","100 g",30],["Proteinshake","1 st",25],["Valio kvarg","1 förp",17],["ProPud Päron","1 flaska",20],["ProPud Strawberry","1 flaska",20],["Keso","100 g",11],["Halloumi","1 skiva",5],["Avokado","1 hel",3],["Potatis","1 st",2]];
 function dk(t=Date.now()){const d=new Date(t);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function lastDays(n){return Array.from({length:n},(_,i)=>dk(Date.now()-(n-1-i)*DAY))}
 function latestWeight(D){const w=sorted(D.weights||[]);return w.length?w[w.length-1].kg:null}
@@ -758,7 +759,7 @@ function vKost(){
    <div class="meter" aria-hidden="true"><span style="width:${pct}%"></span></div>
    <p class="muted" style="font-size:.9rem">${goal?(p>=goal?"Målet är nått idag.":`${Math.round(goal-p)} g kvar till målet.`)+(sk?` ${sk} ${sk===1?"dag":"dagar"} i rad med nått mål.`:""):"Logga din vikt längre ner så räknas ett mål ut."}</p>
    <button class="btn" id="scan">Skanna streckkod</button>
-   <div class="foods">${(s.myFoods||[]).map((f,i)=>`<button class="food mine" data-myfood="${i}"><span>${esc(f.name)}</span><span class="mono">+${f.g} g</span></button>`).join("")}${FOODS.map((f,i)=>`<button class="food" data-food="${i}"><span>${f[0]}</span><span class="mono">+${f[1]} g</span></button>`).join("")}</div>
+   <div class="foods">${(s.myFoods||[]).map((f,i)=>`<button class="food mine" data-myfood="${i}"><b>${esc(f.name)}</b><span class="fp"><span>Egen</span><span class="fg">+${f.g} g</span></span></button>`).join("")}${FOODS.map((f,i)=>`<button class="food" data-food="${i}"><b>${f[0]}</b><span class="fp"><span>${f[1]}</span><span class="fg">+${f[2]} g</span></span></button>`).join("")}</div>
    <div class="row"><input id="pg" type="number" inputmode="numeric" min="1" max="300" placeholder="Annat, gram protein" aria-label="Gram protein" style="flex:1;width:auto"><button class="btn small" id="addp">Lägg till</button></div>
    ${entries.length?`<div class="hist">${entries.map((e,i)=>`<div><span>${esc(e.label)} <span class="muted">${fmtT(e.t)}</span></span><span class="mono">${e.g} g</span>${demo?"":`<button class="x" aria-label="Ta bort" data-delp="${i}">×</button>`}</div>`).join("")}</div>`:""}
    <p class="muted" style="font-size:.8rem">Värdena är ungefärliga. Förpackningen visar exakt mängd.</p>
@@ -858,7 +859,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.site){pickedSite=t.dataset.site;document.querySelectorAll(".site").forEach(b=>b.classList.toggle("on",b===t));return}
   if(t.id==="exp"){exportData();return}
   if(t.id==="ical"){addToCalendar();return}
-  if(t.dataset.food){const f=FOODS[+t.dataset.food];addProtein(f[1],f[0]);toast("+"+f[1]+" g protein");return}
+  if(t.dataset.food){const f=FOODS[+t.dataset.food];addProtein(f[2],f[0]+", "+f[1]);toast("+"+f[2]+" g protein");return}
   if(t.id==="addp"){const g=parseFloat(($("#pg").value||"").replace(",","."));if(!(g>0&&g<=300)){toast("Skriv antal gram protein.");return}addProtein(Math.round(g),"Eget");toast("+"+Math.round(g)+" g protein");return}
   if(t.dataset.delp!=null){const day=state.food[dk()];if(day&&day.protein){day.protein.splice(+t.dataset.delp,1);persist();render()}return}
   if(t.id==="savesteps"){const n=parseInt(($("#steps").value||"").replace(/\D/g,""),10);if(!(n>=0)){toast("Skriv antal steg.");return}ensureReal();const k=dk();(state.food[k]=state.food[k]||{}).steps=n;persist();toast("Steg sparade");render();return}
