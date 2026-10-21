@@ -504,7 +504,7 @@ const ICONS={
  kost:'<svg viewBox="0 0 24 24"><path d="M12 7.5c-2.2-3-7.5-2-7.5 3.2 0 4.8 3 9.8 5.2 9.8 1 0 1.5-.6 2.3-.6s1.3.6 2.3.6c2.2 0 5.2-5 5.2-9.8 0-5.2-5.3-6.2-7.5-3.2z"/><path d="M12 7.5c0-2.2 1.2-4 3.2-4.5"/></svg>',
  bibliotek:'<svg viewBox="0 0 24 24"><path d="M4 4h5v16H4zM10 4h4v16h-4zM15 5l4-1 2 15-4 1z"/></svg>'
 };
-const TABS=[["idag","Idag"],["niva","Nivå"],["kost","Kost & träning"],["logga","Logga"],["bibliotek","Bibliotek"]];
+const TABS=[["idag","Idag"],["niva","Nivå"],["kost","Kost"],["logga","Logga"],["bibliotek","Bibliotek"]];
 function renderTabs(){
   $("#tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}<span>${l}</span></button>`).join("");
 }
@@ -521,7 +521,7 @@ function vIdag(){
   <div class="status"><div><span class="v">${num(I.level)}</span><span class="k">mg i kroppen (uppskattat)</span></div><div><span class="v">${num(I.last.mg,I.last.mg%1?1:0)}</span><span class="k">mg senaste dos</span></div><div><span class="v">${I.week}</span><span class="k">vecka totalt</span></div></div>
   <div class="section" style="gap:6px"><span class="eyebrow">Dagar sedan senaste dos · mörkgrön = idag</span><div class="week" aria-label="Dagar sedan senaste dos">${Array.from({length:7},(_,i)=>`<span class="${i===dd?"on":i<dd?"past":""}">${i===0?"Dos":"+"+i}</span>`).join("")}</div></div>
   <section class="panel"><span class="eyebrow">Vad händer i kroppen</span><h2>${ph.title}</h2><p>${ph.body}</p>${I.weeksAtDose<=4?`<p class="muted">Du är i vecka ${I.weeksAtDose} på ${num(I.last.mg,I.last.mg%1?1:0)} mg. Med en halveringstid runt 6 dagar byggs nivån upp under ungefär 4–5 veckor innan den blir stabil.</p>`:""}</section>
-  ${(()=>{const g=proteinGoal(data()),p=proteinOn(data(),dk()),st=stepsOn(data(),dk());return `<button class="panel todayk" data-tab="kost"><span class="eyebrow">Kost och träning idag ›</span><span class="row"><span><b class="mono">${Math.round(p)}${g?" / "+g:""} g</b> protein</span><span><b class="mono">${st!=null?st.toLocaleString("sv-SE"):"–"}</b> steg</span><span><b class="mono">${passesThisWeek(data())}/3</b> pass</span></span></button>`})()}
+  ${(()=>{const g=proteinGoal(data()),p=proteinOn(data(),dk()),st=stepsOn(data(),dk());return `<button class="panel todayk" data-tab="kost"><span class="eyebrow">Kost idag ›</span><span class="row"><span><b class="mono">${Math.round(p)}${g?" / "+g:""} g</b> protein</span><span><b class="mono">${st!=null?st.toLocaleString("sv-SE"):"–"}</b> steg</span></span></button>`})()}
   <section class="section"><div><span class="eyebrow">Vanliga symptom just nu</span><p class="muted" style="font-size:.88rem">Utifrån var du är i veckan, studiernas mönster och det du själv loggat.</p></div>
    <div class="slist">${list.map(l=>{const x=byId(l.id);return x?`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${esc(l.why)}</small></span><span class="ev ${x.ev}">${EVSHORT[x.ev]}</span><span class="chev">›</span></button>`:""}).join("")}</div></section>
   ${tip?`<section class="panel"><span class="eyebrow">Dagens tips · ${tip.x.name}</span><p>${tip.t}</p></section>`:""}
@@ -835,7 +835,7 @@ function openEx(id){
    ${tip?`<p class="banner" style="background:var(--accent-soft)">${tip}</p>`:""}
    ${H.length?`<div class="hist">${[...H].reverse().slice(0,10).map(h=>`<div><span>${fmtD(h.t)}</span><span class="mono">${fmtVal(e,h)}</span></div>`).join("")}</div>`:`<p class="muted">Inte loggad än. Starta ett pass för att börja.</p>`}`);
 }
-function vKost(){return sub==="trana"?vTrana():vKostInner()}
+function vKost(){return vKostInner()}
 function vKostInner(){
   const D=data(), today=dk(), goal=proteinGoal(D), p=proteinOn(D,today), pct=goal?Math.min(100,p/goal*100):0, s=D.settings||{};
   const days=lastDays(7), lab=days.map(k=>new Date(k+"T12:00").toLocaleDateString("sv-SE",{weekday:"short"}).replace(".",""));
@@ -843,7 +843,7 @@ function vKostInner(){
   const stepVals=days.map(k=>stepsOn(D,k)||0), logged=stepVals.filter(v=>v>0), avg=logged.length?Math.round(logged.reduce((a,b)=>a+b,0)/logged.length):null;
   const Wt=sorted(D.weights||[]), sk=goal?streak(D,goal):0;
   return `${demoBanner()}
-  <header class="section"><span class="eyebrow">Kost och träning</span><h1>Kost</h1></header>${segBar()}
+  <header class="section"><span class="eyebrow">Kost, steg och vikt</span><h1>Kost</h1></header>
   <section class="panel"><span class="eyebrow">Protein idag</span>
    <div class="big"><span class="mono">${Math.round(p)}</span><span class="muted">/ ${goal?goal+" g":"inget mål än"}</span></div>
    <div class="meter" aria-hidden="true"><span style="width:${pct}%"></span></div>
