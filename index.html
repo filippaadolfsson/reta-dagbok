@@ -127,6 +127,19 @@ html,body{overflow-x:hidden}
 .cam video{width:100%;height:100%;object-fit:cover;display:block}
 .aim{position:absolute;left:8%;right:8%;top:36%;height:28%;border:2px solid rgba(255,255,255,.9);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
 .food.mine{border-color:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--sunk);border-radius:11px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;padding:10px;border-radius:8px;font-weight:700;color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.dots{display:flex;gap:8px}.dots span{flex:1;height:10px;border-radius:99px;background:var(--sunk)}.dots span.on{background:var(--accent)}
+.exlist{display:flex;flex-direction:column;gap:10px}
+.ex{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.ex.done{border-color:var(--accent);background:var(--accent-soft)}
+.exh{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.exh b{min-width:0}.exh a{color:var(--accent);font-size:.88rem;white-space:nowrap}
+.exin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}.exin.two{grid-template-columns:minmax(0,1fr) auto}
+.okbtn{border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:9px;padding:10px 12px;font-weight:700;white-space:nowrap;min-height:44px}
+.okbtn.on{background:var(--accent);color:var(--surface)}
+.spark{flex:none}
+.tabs button span{line-height:1.15;text-align:center}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:.9rem;z-index:50}
 /* Diagram */
 .chart{width:100%;overflow-x:auto}
@@ -417,7 +430,7 @@ const ALARM=["Svår, ihållande buksmärta, särskilt om den strålar mot ryggen
 
 /* ---------- Tillstånd ---------- */
 const HOUR=3600e3, DAY=24*HOUR, SITES=["Mage V","Mage H","Lår V","Lår H","Arm V","Arm H"];
-let state={doses:[],symptoms:[],settings:{halfLife:6},food:{},weights:[]};
+let state={doses:[],symptoms:[],settings:{halfLife:6},food:{},weights:[],workouts:[],workoutDraft:null};
 let demo=false, tab="idag";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -432,7 +445,7 @@ function demoData(){
   return {doses:d,symptoms:[
     {t:now-1*DAY+2*HOUR,id:"sleep",sev:2},{t:now-8*DAY+2*HOUR,id:"sleep",sev:2},{t:now-15*DAY,id:"sleep",sev:1},
     {t:now-1*DAY,id:"heat",sev:1},{t:now-3*DAY,id:"drymouth",sev:1},{t:now-6*DAY,id:"hunger",sev:2},{t:now-13*DAY,id:"hunger",sev:2},
-    {t:now-8*DAY,id:"nausea",sev:1},{t:now-2*DAY,id:"skin",sev:1}],settings:{halfLife:6},food:demoFood(now),weights:[{t:now-35*DAY,kg:94.2},{t:now-28*DAY,kg:93.1},{t:now-21*DAY,kg:92.0},{t:now-14*DAY,kg:91.4},{t:now-7*DAY,kg:90.3},{t:now-1*DAY,kg:89.6}]};
+    {t:now-8*DAY,id:"nausea",sev:1},{t:now-2*DAY,id:"skin",sev:1}],settings:{halfLife:6},food:demoFood(now),weights:[{t:now-35*DAY,kg:94.2},{t:now-28*DAY,kg:93.1},{t:now-21*DAY,kg:92.0},{t:now-14*DAY,kg:91.4},{t:now-7*DAY,kg:90.3},{t:now-1*DAY,kg:89.6}],workouts:demoWorkouts(now)};
 }
 function data(){return demo?demoData():state}
 
@@ -491,7 +504,7 @@ const ICONS={
  kost:'<svg viewBox="0 0 24 24"><path d="M12 7.5c-2.2-3-7.5-2-7.5 3.2 0 4.8 3 9.8 5.2 9.8 1 0 1.5-.6 2.3-.6s1.3.6 2.3.6c2.2 0 5.2-5 5.2-9.8 0-5.2-5.3-6.2-7.5-3.2z"/><path d="M12 7.5c0-2.2 1.2-4 3.2-4.5"/></svg>',
  bibliotek:'<svg viewBox="0 0 24 24"><path d="M4 4h5v16H4zM10 4h4v16h-4zM15 5l4-1 2 15-4 1z"/></svg>'
 };
-const TABS=[["idag","Idag"],["niva","Nivå"],["kost","Kost"],["logga","Logga"],["bibliotek","Bibliotek"]];
+const TABS=[["idag","Idag"],["niva","Nivå"],["kost","Kost & träning"],["logga","Logga"],["bibliotek","Bibliotek"]];
 function renderTabs(){
   $("#tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}<span>${l}</span></button>`).join("");
 }
@@ -508,7 +521,7 @@ function vIdag(){
   <div class="status"><div><span class="v">${num(I.level)}</span><span class="k">mg i kroppen (uppskattat)</span></div><div><span class="v">${num(I.last.mg,I.last.mg%1?1:0)}</span><span class="k">mg senaste dos</span></div><div><span class="v">${I.week}</span><span class="k">vecka totalt</span></div></div>
   <div class="section" style="gap:6px"><span class="eyebrow">Dagar sedan senaste dos · mörkgrön = idag</span><div class="week" aria-label="Dagar sedan senaste dos">${Array.from({length:7},(_,i)=>`<span class="${i===dd?"on":i<dd?"past":""}">${i===0?"Dos":"+"+i}</span>`).join("")}</div></div>
   <section class="panel"><span class="eyebrow">Vad händer i kroppen</span><h2>${ph.title}</h2><p>${ph.body}</p>${I.weeksAtDose<=4?`<p class="muted">Du är i vecka ${I.weeksAtDose} på ${num(I.last.mg,I.last.mg%1?1:0)} mg. Med en halveringstid runt 6 dagar byggs nivån upp under ungefär 4–5 veckor innan den blir stabil.</p>`:""}</section>
-  ${(()=>{const g=proteinGoal(data()),p=proteinOn(data(),dk()),st=stepsOn(data(),dk());return `<button class="panel todayk" data-tab="kost"><span class="eyebrow">Kost och träning idag ›</span><span class="row"><span><b class="mono">${Math.round(p)}${g?" / "+g:""} g</b> protein</span><span><b class="mono">${st!=null?st.toLocaleString("sv-SE"):"–"}</b> steg</span></span></button>`})()}
+  ${(()=>{const g=proteinGoal(data()),p=proteinOn(data(),dk()),st=stepsOn(data(),dk());return `<button class="panel todayk" data-tab="kost"><span class="eyebrow">Kost och träning idag ›</span><span class="row"><span><b class="mono">${Math.round(p)}${g?" / "+g:""} g</b> protein</span><span><b class="mono">${st!=null?st.toLocaleString("sv-SE"):"–"}</b> steg</span><span><b class="mono">${passesThisWeek(data())}/3</b> pass</span></span></button>`})()}
   <section class="section"><div><span class="eyebrow">Vanliga symptom just nu</span><p class="muted" style="font-size:.88rem">Utifrån var du är i veckan, studiernas mönster och det du själv loggat.</p></div>
    <div class="slist">${list.map(l=>{const x=byId(l.id);return x?`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${esc(l.why)}</small></span><span class="ev ${x.ev}">${EVSHORT[x.ev]}</span><span class="chev">›</span></button>`:""}).join("")}</div></section>
   ${tip?`<section class="panel"><span class="eyebrow">Dagens tips · ${tip.x.name}</span><p>${tip.t}</p></section>`:""}
@@ -657,8 +670,8 @@ function proteinGoal(D){const s=D.settings||{};if(s.proteinManual>0)return s.pro
 function proteinOn(D,k){return (((D.food||{})[k]||{}).protein||[]).reduce((a,b)=>a+b.g,0)}
 function stepsOn(D,k){const v=((D.food||{})[k]||{}).steps;return v==null?null:v}
 function streak(D,goal){let n=0;for(let i=0;i<365;i++){const p=proteinOn(D,dk(Date.now()-i*DAY));if(p>=goal)n++;else if(i===0)continue;else break}return n}
-function isEmpty(){return !state.doses.length&&!Object.keys(state.food||{}).length&&!(state.weights||[]).length}
-function ensureReal(){if(demo){state={doses:[],symptoms:[],settings:{halfLife:6},food:{},weights:[]};demo=false}state.food=state.food||{};state.weights=state.weights||[]}
+function isEmpty(){return !state.doses.length&&!Object.keys(state.food||{}).length&&!(state.weights||[]).length&&!(state.workouts||[]).length&&!state.workoutDraft}
+function ensureReal(){if(demo){state={doses:[],symptoms:[],settings:{halfLife:6},food:{},weights:[],workouts:[],workoutDraft:null};demo=false}state.food=state.food||{};state.weights=state.weights||[];state.workouts=state.workouts||[]}
 function demoFood(now){const f={},P=[96,112,84,120,105,72,58],S=[6400,9100,4800,11200,7600,8300,3900];for(let i=0;i<7;i++)f[dk(now-(6-i)*DAY)]={protein:[{g:P[i],label:"Exempel",t:now-(6-i)*DAY}],steps:S[i]};return f}
 function addProtein(g,label){ensureReal();const k=dk();const day=state.food[k]=state.food[k]||{};day.protein=(day.protein||[]).concat([{g,label,t:Date.now()}]);persist();render()}
 function barChart(vals,goal,labels,unit){
@@ -746,14 +759,90 @@ function showProduct(P){
    ${P.src==="off"?`<p class="srcs">Data från <a href="https://world.openfoodfacts.org/product/${P.code}" target="_blank" rel="noopener">Open Food Facts</a>. Jämför gärna med förpackningen.</p>`:""}`);
 }
 function calcScan(){const g=parseFloat(($("#grams")||{}).value)||0,c=$("#calc");if(c&&curProd)c.textContent=Math.round(curProd.p100*g/100)}
-function vKost(){
+/* ---------- Träning ---------- */
+const EX=[
+ {id:"hip",name:"Hip thrust på bänk",sets:3,reps:"20",ex:10172,opt:true},
+ {id:"press",name:"Benpress",sets:3,reps:"10–12",ex:12074},
+ {id:"curlben",name:"Liggande leg curl",sets:3,reps:"10–12",ex:3141},
+ {id:"spark",name:"Benspark",sets:3,reps:"10–12",ex:128},
+ {id:"insida",name:"Insida lår",sets:3,reps:"15–20",ex:136},
+ {id:"utsida",name:"Utsida höft",sets:3,reps:"15–20",ex:137},
+ {id:"brost",name:"Bröstpress",sets:3,reps:"10–12",ex:8425},
+ {id:"rodd",name:"Sittande rodd",sets:3,reps:"10–12",ex:3198},
+ {id:"hantel",name:"Hantelcurl",sets:3,reps:"10–12",ex:203,note:"vikt per hantel"},
+ {id:"planka",name:"Planka",sets:2,reps:"1 min",ex:14672,time:true}];
+let sub="kost", draftTimer=0;
+const vid=e=>`https://exorlive.com/video/?culture=sv-SE&ex=${e.ex}`;
+const topRep=e=>{const m=String(e.reps).match(/(\d+)\D*$/);return m?+m[1]:null};
+function segBar(){return `<div class="seg" role="tablist" aria-label="Kost eller träning">${[["kost","Kost"],["trana","Träning"]].map(([k,l])=>`<button role="tab" aria-selected="${sub===k}" data-sub="${k}">${l}</button>`).join("")}</div>`}
+function lastFor(D,id){const w=sorted(D.workouts||[]).reverse();for(const x of w){const it=(x.items||[]).find(i=>i.id===id);if(it)return Object.assign({t:x.t},it)}return null}
+function weekStart(t=Date.now()){const d=new Date(t);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
+function passesThisWeek(D){const ws=weekStart();return (D.workouts||[]).filter(w=>w.t>=ws).length}
+function weekStreak(D){let n=0;for(let i=0;i<104;i++){const ref=new Date(weekStart());ref.setDate(ref.getDate()-7*i);const ws=ref.getTime(),we=new Date(ref.getFullYear(),ref.getMonth(),ref.getDate()+7).getTime();const c=(D.workouts||[]).filter(w=>w.t>=ws&&w.t<we).length;if(c>=3)n++;else if(i===0)continue;else break}return n}
+function fmtVal(e,v){if(e.time)return `${v.reps} sek`;return `${e.sets} × ${v.reps}`+(v.kg>0?` · ${num(v.kg,v.kg%1?1:0)} kg`:(e.opt?" · utan vikt":""))}
+function demoWorkouts(now){const base={hip:[20,30],press:[60,75],curlben:[20,27.5],spark:[25,32.5],insida:[30,37.5],utsida:[30,37.5],brost:[15,22.5],rodd:[20,27.5],hantel:[5,7],planka:[40,60]};const out=[];for(let i=0;i<8;i++){const f=i/7,t=now-(23-i*3)*DAY;out.push({t,stair:20,items:EX.map(e=>{const[a,b]=base[e.id],v=Math.round((a+(b-a)*f)*2)/2;return e.time?{id:e.id,reps:Math.round(v)}:{id:e.id,reps:topRep(e)-(i%3===0?2:0),kg:v}})})}return out}
+function exHistory(D,id){return sorted(D.workouts||[]).flatMap(w=>(w.items||[]).filter(i=>i.id===id).map(i=>Object.assign({t:w.t},i)))}
+function exSeries(D,e){const H=exHistory(D,e.id),useKg=!e.time&&H.some(h=>h.kg>0);return {H,useKg,P:H.map(h=>({t:h.t,v:useKg?(h.kg||0):h.reps}))}}
+function spark(D,e){const {P}=exSeries(D,e),Q=P.slice(-8);if(Q.length<2)return "";const vs=Q.map(p=>p.v),mn=Math.min(...vs),mx=Math.max(...vs),W=56,H=22;
+  const pts=Q.map((p,i)=>(i/(Q.length-1)*(W-4)+2).toFixed(1)+","+(mx===mn?H/2:(H-3-(p.v-mn)/(mx-mn)*(H-6))).toFixed(1)).join(" ");
+  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--curve)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`}
+function lineChart(P,unit){const W=340,H=140,L=34,R=10,T=12,B=22,vs=P.map(p=>p.v);let mn=Math.min(...vs),mx=Math.max(...vs);if(mn===mx){mn-=1;mx+=1}const pad=(mx-mn)*.15;mn=Math.max(0,Math.floor(mn-pad));mx=Math.ceil(mx+pad);const t0=P[0].t,t1=P[P.length-1].t;
+  const X=t=>L+(t-t0)/((t1-t0)||1)*(W-L-R),Y=v=>T+(1-(v-mn)/(mx-mn))*(H-T-B),f=v=>num(v,v%1?1:0);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Utveckling över tid i ${unit}">${[mn,mx].map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)"/><text x="${L-6}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="var(--f-mono)">${f(v)}</text>`).join("")}
+   <text x="${L}" y="${H-6}" font-size="10" fill="var(--muted)">${fmtD(t0)}</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)">${fmtD(t1)}</text>
+   <polyline points="${P.map(p=>X(p.t).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ")}" fill="none" stroke="var(--curve)" stroke-width="2.4" stroke-linejoin="round"/>${P.map(p=>`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="3.5" fill="var(--curve)"/>`).join("")}</svg>`}
+function vTrana(){
+  const D=data(), dr=demo?null:state.workoutDraft, n=passesThisWeek(D), sk=weekStreak(D), W=sorted(D.workouts||[]).reverse();
+  return `${demoBanner()}
+  <header class="section"><span class="eyebrow">Kost och träning</span><h1>Träning</h1></header>${segBar()}
+  <section class="panel"><span class="eyebrow">Den här veckan</span>
+   <div class="big"><span class="mono">${Math.min(n,9)}</span><span class="muted">/ 3 pass</span></div>
+   <div class="dots" aria-hidden="true">${[0,1,2].map(i=>`<span class="${i<n?"on":""}"></span>`).join("")}</div>
+   <p class="muted" style="font-size:.9rem">${n>=3?"Veckans mål är klart.":`${3-n} pass kvar den här veckan.`}${sk?` ${sk} ${sk===1?"vecka":"veckor"} i rad med 3 pass.`:""}</p>
+   ${dr?"":`<button class="btn" id="startpass">Starta dagens pass</button>`}
+  </section>
+  ${dr?passPanel(D,dr):""}
+  <section class="section"><span class="eyebrow">Utveckling per övning</span><div class="slist">${EX.map(e=>{const l=lastFor(D,e.id);return `<button class="sitem" data-exinfo="${e.id}"><span class="t"><b>${e.name}</b><small>${l?fmtVal(e,l)+" · "+fmtD(l.t):"Inte loggad än · mål "+e.sets+" × "+e.reps}</small></span>${spark(D,e)}<span class="chev">›</span></button>`}).join("")}</div></section>
+  ${W.length?`<section class="panel"><span class="eyebrow">Senaste passen</span><div class="hist">${W.slice(0,6).map(w=>`<div><span>${fmtD(w.t)}</span><span class="muted">${(w.items||[]).length} övn${w.stair?" · "+w.stair+" min trappa":""}</span>${demo?"":`<button class="x" aria-label="Ta bort passet" data-delpass="${w.t}">×</button>`}</div>`).join("")}</div></section>`:""}
+  ${foot()}`;
+}
+function passPanel(D,dr){
+  const done=EX.filter(e=>(dr.items[e.id]||{}).done).length+(dr.stairDone?1:0);
+  return `<section class="panel"><div class="row" style="justify-content:space-between"><h2>Dagens pass</h2><span class="muted mono">${done}/${EX.length+1}</span></div>
+  <p class="muted" style="font-size:.88rem">Förra gångens siffror är ifyllda. Ändra om det behövs och tryck Klar. Vila 60–90 sek mellan seten.</p>
+  <div class="exlist">${EX.map((e,i)=>{const it=dr.items[e.id]||{},l=lastFor(D,e.id),reps=it.reps!=null&&it.reps!==""?it.reps:(l?l.reps:""),kg=it.kg!=null&&it.kg!==""?it.kg:(l&&l.kg!=null?l.kg:"");
+   return `<div class="ex ${it.done?"done":""}"><div class="exh"><b>${i+1}. ${e.name}</b><a href="${vid(e)}" target="_blank" rel="noopener">Video</a></div>
+    <small class="muted">${e.sets} × ${e.reps}${e.note?" · "+e.note:""}${l?" · förra: "+fmtVal(e,l):""}</small>
+    <div class="exin ${e.time?"two":""}"><label for="r-${e.id}">${e.time?"Sekunder":"Reps"}<input id="r-${e.id}" data-exr="${e.id}" type="number" inputmode="numeric" value="${reps}" placeholder="${e.time?60:topRep(e)||""}"></label>
+    ${e.time?"":`<label for="k-${e.id}">Kg<input id="k-${e.id}" data-exk="${e.id}" type="number" inputmode="decimal" step="0.5" value="${kg}" placeholder="${e.opt?"0":""}"></label>`}
+    <button class="okbtn ${it.done?"on":""}" data-exdone="${e.id}" aria-pressed="${!!it.done}">${it.done?"✓ Klar":"Klar"}</button></div></div>`}).join("")}
+   <div class="ex ${dr.stairDone?"done":""}"><div class="exh"><b>Stairmaster</b></div><small class="muted">20 minuter</small>
+    <div class="exin two"><label for="stair">Minuter<input id="stair" data-stair="1" type="number" inputmode="numeric" value="${dr.stair!=null&&dr.stair!==""?dr.stair:20}"></label><button class="okbtn ${dr.stairDone?"on":""}" data-stairdone="1" aria-pressed="${!!dr.stairDone}">${dr.stairDone?"✓ Klar":"Klar"}</button></div></div>
+  </div>
+  <button class="btn" id="endpass">Avsluta och spara passet</button>
+  <button class="btn ghost small" id="cancelpass">Slänga passet</button></section>`;
+}
+function draftSave(){clearTimeout(draftTimer);draftTimer=setTimeout(persist,600)}
+function draftVal(id,key,val){const dr=state.workoutDraft;if(!dr)return;const n=parseFloat(String(val).replace(",","."));if(id==="stair"){dr.stair=isNaN(n)?"":n}else{const it=dr.items[id]=dr.items[id]||{};it[key]=isNaN(n)?"":n}draftSave()}
+function openEx(id){
+  const e=EX.find(x=>x.id===id),D=data(),{H,useKg,P}=exSeries(D,e),last=H[H.length-1],tr=topRep(e);
+  let tip="";
+  if(last&&!e.time&&tr&&last.reps>=tr) tip=`Du klarade ${last.reps} reps senast, toppen av intervallet. Testa att öka vikten lite nästa gång, till exempel 2,5 kg, och sikta på den lägre siffran igen.`;
+  else if(last&&e.time&&last.reps>=60) tip="Du håller en minut. Nästa steg kan vara att hålla lite längre.";
+  sheet(`${sheetHead(e.name)}<p class="muted">Mål ${e.sets} × ${e.reps}${e.note?" · "+e.note:""} · <a href="${vid(e)}" target="_blank" rel="noopener" style="color:var(--accent)">Visa video</a></p>
+   ${P.length>1?`<div><span class="eyebrow">${useKg?"Vikt i kg":(e.time?"Sekunder":"Reps")}</span><div class="chart">${lineChart(P,useKg?"kg":(e.time?"sekunder":"reps"))}</div></div>`:""}
+   ${tip?`<p class="banner" style="background:var(--accent-soft)">${tip}</p>`:""}
+   ${H.length?`<div class="hist">${[...H].reverse().slice(0,10).map(h=>`<div><span>${fmtD(h.t)}</span><span class="mono">${fmtVal(e,h)}</span></div>`).join("")}</div>`:`<p class="muted">Inte loggad än. Starta ett pass för att börja.</p>`}`);
+}
+function vKost(){return sub==="trana"?vTrana():vKostInner()}
+function vKostInner(){
   const D=data(), today=dk(), goal=proteinGoal(D), p=proteinOn(D,today), pct=goal?Math.min(100,p/goal*100):0, s=D.settings||{};
   const days=lastDays(7), lab=days.map(k=>new Date(k+"T12:00").toLocaleDateString("sv-SE",{weekday:"short"}).replace(".",""));
   const entries=((D.food||{})[today]||{}).protein||[], kg=latestWeight(D), st=stepsOn(D,today), sgoal=s.stepGoal||8000;
   const stepVals=days.map(k=>stepsOn(D,k)||0), logged=stepVals.filter(v=>v>0), avg=logged.length?Math.round(logged.reduce((a,b)=>a+b,0)/logged.length):null;
   const Wt=sorted(D.weights||[]), sk=goal?streak(D,goal):0;
   return `${demoBanner()}
-  <header class="section"><span class="eyebrow">Kost och träning</span><h1>Kost</h1></header>
+  <header class="section"><span class="eyebrow">Kost och träning</span><h1>Kost</h1></header>${segBar()}
   <section class="panel"><span class="eyebrow">Protein idag</span>
    <div class="big"><span class="mono">${Math.round(p)}</span><span class="muted">/ ${goal?goal+" g":"inget mål än"}</span></div>
    <div class="meter" aria-hidden="true"><span style="width:${pct}%"></span></div>
@@ -818,7 +907,7 @@ function openCard(id){
   $("#close").focus();
 }
 function closeCard(){stopScan();$("#layer").innerHTML=""}
-function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function toast(m){document.querySelectorAll(".toast").forEach(x=>x.remove());const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 
 /* ---------- Lagring ---------- */
 function persist(){
@@ -827,7 +916,7 @@ function persist(){
 }
 function boot(){
   try{const raw=localStorage.getItem("reta-dagbok"); if(raw) state=Object.assign(state,JSON.parse(raw));}catch(e){}
-  state.food=state.food||{}; state.weights=state.weights||[];
+  state.food=state.food||{}; state.weights=state.weights||[]; state.workouts=state.workouts||[];
   demo=isEmpty(); render();
 }
 function exportData(){
@@ -841,7 +930,7 @@ function exportData(){
 function importData(file){
   const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result); if(!Array.isArray(d.doses)||!Array.isArray(d.symptoms)) throw 0;
-    state={doses:d.doses,symptoms:d.symptoms,settings:Object.assign({halfLife:6},d.settings||{}),food:d.food||{},weights:d.weights||[]}; demo=isEmpty(); persist(); toast("Backup inläst"); render();
+    state={doses:d.doses,symptoms:d.symptoms,settings:Object.assign({halfLife:6},d.settings||{}),food:d.food||{},weights:d.weights||[],workouts:d.workouts||[],workoutDraft:d.workoutDraft||null}; demo=isEmpty(); persist(); toast("Backup inläst"); render();
   }catch(e){toast("Filen kunde inte läsas. Välj en backupfil från Reta-dagboken.")}};
   r.readAsText(file);
 }
@@ -876,6 +965,18 @@ document.addEventListener("click",e=>{
     const nm=curProd.name;closeCard();addProtein(pr,nm);toast("+"+pr+" g protein");return}
   if(t.dataset.myfood!=null){const f=(state.settings.myFoods||[])[+t.dataset.myfood];if(f){addProtein(f.g,f.name);toast("+"+f.g+" g protein")}return}
   if(t.dataset.delfav!=null){state.settings.myFoods.splice(+t.dataset.delfav,1);persist();render();return}
+  if(t.dataset.sub){sub=t.dataset.sub;render();return}
+  if(t.id==="startpass"){ensureReal();state.workoutDraft={t:Date.now(),items:{},stair:20,stairDone:false};persist();render();return}
+  if(t.dataset.exdone){const id=t.dataset.exdone,dr=state.workoutDraft;if(!dr)return;const it=dr.items[id]=dr.items[id]||{};
+    if(!it.done){const r=parseFloat(($("#r-"+id)||{}).value),k=$("#k-"+id)?parseFloat(($("#k-"+id).value||"").replace(",",".")):NaN;if(!(r>0)){toast(EX.find(e=>e.id===id).time?"Skriv antal sekunder först.":"Skriv antal reps först.");return}it.reps=r;it.kg=isNaN(k)?0:k}
+    it.done=!it.done;persist();render();return}
+  if(t.dataset.stairdone){const dr=state.workoutDraft;if(!dr)return;const m=parseFloat(($("#stair")||{}).value);dr.stair=m>0?m:20;dr.stairDone=!dr.stairDone;persist();render();return}
+  if(t.id==="endpass"){const dr=state.workoutDraft;if(!dr)return;const items=EX.filter(e=>(dr.items[e.id]||{}).done).map(e=>{const it=dr.items[e.id];return e.time?{id:e.id,reps:it.reps}:{id:e.id,reps:it.reps,kg:it.kg||0}});
+    if(!items.length&&!dr.stairDone){toast("Markera minst en övning som klar först.");return}
+    state.workouts.push({t:Date.now(),items,stair:dr.stairDone?dr.stair:0});state.workoutDraft=null;persist();toast("Passet sparat");render();window.scrollTo(0,0);return}
+  if(t.id==="cancelpass"){if(t.dataset.sure){state.workoutDraft=null;persist();render();return}t.dataset.sure="1";t.textContent="Tryck igen för att slänga passet";setTimeout(()=>{if(t.isConnected){delete t.dataset.sure;t.textContent="Slänga passet"}},3000);return}
+  if(t.dataset.delpass){if(t.dataset.sure){state.workouts=state.workouts.filter(w=>String(w.t)!==t.dataset.delpass);demo=isEmpty();persist();render();return}t.dataset.sure="1";t.textContent="Ta bort?";setTimeout(()=>{if(t.isConnected){delete t.dataset.sure;t.textContent="×"}},3000);return}
+  if(t.dataset.exinfo){openEx(t.dataset.exinfo);return}
   if(t.id==="saveDose"){
     const dt=$("#dt").value, mg=parseFloat(($("#mg").value||"").replace(",","."));
     if(!dt||!(mg>0)){toast("Fyll i datum och dos i mg.");return}
@@ -891,6 +992,9 @@ document.addEventListener("click",e=>{
   if(t.dataset.delsym){const[ts,id]=t.dataset.delsym.split("|");state.symptoms=state.symptoms.filter(s=>!(String(s.t)===ts&&s.id===id));persist();render();return}
 });
 document.addEventListener("input",e=>{
+  if(e.target.dataset.exr){draftVal(e.target.dataset.exr,"reps",e.target.value);return}
+  if(e.target.dataset.exk){draftVal(e.target.dataset.exk,"kg",e.target.value);return}
+  if(e.target.dataset.stair){draftVal("stair","",e.target.value);return}
   if(e.target.id==="grams"){document.querySelectorAll("[data-portion]").forEach(b=>b.classList.remove("on"));calcScan();return}
   if(e.target.id==="q"){q=e.target.value;$("#libList").innerHTML=libItems(LIB.filter(x=>!q||(x.name+" "+x.short).toLowerCase().includes(q.toLowerCase())))}
 });
