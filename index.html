@@ -86,9 +86,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
 .tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
 /* Formulär */
-label{display:flex;flex-direction:column;gap:5px;font-size:.88rem;color:var(--muted);font-weight:700}
-input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:.88rem;color:var(--muted);font-weight:700}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:480px){.grid2{grid-template-columns:minmax(0,1fr)}}
+html,body{overflow-x:hidden}
 .sites{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .site{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 4px;font-size:.85rem;text-align:center}
 .site.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
@@ -458,7 +460,7 @@ const PHASE={
 function nowList(I){
   const out=[], add=(id,why)=>{if(!out.find(o=>o.id===id))out.push({id,why})};
   const pats=patterns();
-  pats.forEach(p=>{if(p.arr[Math.min(I.day,7)]>0)add(p.id,`Du har loggat det ${p.arr[Math.min(I.day,7)]} gång${p.arr[Math.min(I.day,7)]>1?"er":""} dag +${Math.min(I.day,7)} tidigare`)});
+  pats.forEach(p=>{if(p.arr[Math.min(I.day,7)]>0)add(p.id,`Du har loggat det ${p.arr[Math.min(I.day,7)]} gång${p.arr[Math.min(I.day,7)]>1?"er":""} ${dLabel(Math.min(I.day,7))} tidigare`)});
   if(I.sinceInc!=null&&I.sinceInc<=28){add("nausea","Du höjde dosen för "+I.sinceInc+" dagar sedan");add("stomach","Vanligt veckorna efter dosökning")}
   LIB.filter(x=>x.phase.includes(I.phase)).forEach(x=>add(x.id,"Vanligt i den här delen av veckan"));
   if(I.weeksAtDose<=4) add("hunger","Nivån har inte byggts upp helt än (vecka "+I.weeksAtDose+" på samma dos)");
@@ -485,7 +487,7 @@ function vIdag(){
   const tip=(()=>{const pool=list.map(l=>byId(l.id)).filter(Boolean);const x=pool[new Date().getDate()%pool.length];return x?{x,t:x.tips[new Date().getDate()%x.tips.length]}:null})();
   const todays=data().symptoms.filter(s=>new Date(s.t).toDateString()===new Date().toDateString()).map(s=>s.id);
   return `${demoBanner()}
-  <header class="section"><span class="eyebrow">${new Date().toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"})}</span><h1>Dag ${I.day} efter dos</h1></header>
+  <header class="section"><span class="eyebrow">${new Date().toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"})}</span><h1>${I.day===0?"Injektionsdag":I.day===1?"Dagen efter injektionen":"Dag "+I.day+" efter injektionen"}</h1></header>
   <div class="status"><div><span class="v">${num(I.level)}</span><span class="k">mg i kroppen (uppskattat)</span></div><div><span class="v">${num(I.last.mg,I.last.mg%1?1:0)}</span><span class="k">mg senaste dos</span></div><div><span class="v">${I.week}</span><span class="k">vecka totalt</span></div></div>
   <div class="section" style="gap:6px"><span class="eyebrow">Dagar sedan senaste dos · mörkgrön = idag</span><div class="week" aria-label="Dagar sedan senaste dos">${Array.from({length:7},(_,i)=>`<span class="${i===dd?"on":i<dd?"past":""}">${i===0?"Dos":"+"+i}</span>`).join("")}</div></div>
   <section class="panel"><span class="eyebrow">Vad händer i kroppen</span><h2>${ph.title}</h2><p>${ph.body}</p>${I.weeksAtDose<=4?`<p class="muted">Du är i vecka ${I.weeksAtDose} på ${num(I.last.mg,I.last.mg%1?1:0)} mg. Med en halveringstid runt 6 dagar byggs nivån upp under ungefär 4–5 veckor innan den blir stabil.</p>`:""}</section>
@@ -499,7 +501,7 @@ function vIdag(){
 }
 function vPatterns(){
   const p=patterns().filter(x=>x.tot>=2); if(!p.length) return "";
-  return `<section class="panel"><span class="eyebrow">Dina mönster</span><p class="muted" style="font-size:.88rem">Staplarna visar dag +0 till +7 efter dos.</p><div class="pattern">${p.slice(0,5).map(x=>{const mx=Math.max(...x.arr);return `<div class="prow"><span><b>${byId(x.id).name}</b><br><small class="muted">Oftast dag +${x.top} (${x.arr[x.top]} av ${x.tot} gånger)</small></span><span class="bars" aria-hidden="true">${x.arr.map(v=>`<span class="${v?"":"z"}" style="height:${v?Math.max(4,v/mx*26):2}px"></span>`).join("")}</span></div>`}).join("")}</div></section>`;
+  return `<section class="panel"><span class="eyebrow">Dina mönster</span><p class="muted" style="font-size:.88rem">Staplarna visar injektionsdagen och de sju dagarna efter.</p><div class="pattern">${p.slice(0,5).map(x=>{const mx=Math.max(...x.arr);return `<div class="prow"><span><b>${byId(x.id).name}</b><br><small class="muted">Oftast ${dLabel(x.top)} (${x.arr[x.top]} av ${x.tot} gånger)</small></span><span class="bars" aria-hidden="true">${x.arr.map(v=>`<span class="${v?"":"z"}" style="height:${v?Math.max(4,v/mx*26):2}px"></span>`).join("")}</span></div>`}).join("")}</div></section>`;
 }
 
 function vNiva(){
@@ -539,6 +541,7 @@ function vNiva(){
    <label for="hl">Halveringstid i modellen (dagar)<input id="hl" type="number" min="3" max="10" step="0.5" value="${hl}"></label></section>
   ${foot()}`;
 }
+function dLabel(d){return d===0?"på injektionsdagen":"dag +"+d+" efter injektionen"}
 function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p}
 
 function vLogga(){
@@ -599,7 +602,7 @@ function openCard(id){
   $("#layer").innerHTML=`<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ct">
    <div class="row" style="justify-content:space-between"><span class="ev ${x.ev}">${EV[x.ev]}</span><button class="x" id="close" aria-label="Stäng">×</button></div>
    <h2 id="ct">${x.name}</h2>
-   ${pats?`<p class="banner" style="background:var(--accent-soft)"><b style="color:var(--accent)">Ditt mönster:</b> loggat ${pats.tot} gång${pats.tot>1?"er":""}, oftast dag +${pats.top} efter dos.</p>`:""}
+   ${pats?`<p class="banner" style="background:var(--accent-soft)"><b style="color:var(--accent)">Ditt mönster:</b> loggat ${pats.tot} gång${pats.tot>1?"er":""}, oftast ${dLabel(pats.top)}.</p>`:""}
    <div><h4>Vad forskningen säger</h4><p>${x.research}</p></div>
    <div><h4>Varför det kan hända</h4><p>${x.why}</p></div>
    ${x.when?`<div><h4>När det brukar märkas</h4><p>${x.when}</p></div>`:""}
