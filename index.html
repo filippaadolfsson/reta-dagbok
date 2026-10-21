@@ -175,6 +175,8 @@ html,body{overflow-x:hidden}
 .caldet{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
 .caldet h4{margin:0;font-family:var(--f-display)}
 .x[disabled]{opacity:.3}
+.ins{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+.lnk{background:none;border:0;padding:0;color:var(--accent);font-weight:700;text-decoration:underline;font-size:inherit;font-family:inherit}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:.9rem;z-index:50}
 /* Diagram */
 .chart{width:100%;overflow-x:auto}
@@ -223,7 +225,9 @@ const SRC=[
  ["Bolt Pharmacy: Interaktioner med retatrutid","https://www.boltpharmacy.co.uk/guide/what-not-to-take-with-retatrutide"],
  ["Peptide Dossier: Ovanligare biverkningar","https://peptidedossier.com/guides/retatrutide-side-effects/"],
  ["Medino: Svavelrapningar på GLP-1","https://www.medino.com/article/sulphur-burps-on-wegovy"],
- ["Lilly: TRIUMPH-1 och TRANSCEND-T2D-1","https://lilly.gcs-web.com/node/54396"]
+ ["Lilly: TRIUMPH-1 och TRANSCEND-T2D-1","https://lilly.gcs-web.com/node/54396"],
+ ["Pharmaceutical Journal: EMA om NAION och semaglutid","https://pharmaceutical-journal.com/article/news/eye-disorder-is-a-very-rare-side-effect-of-weight-loss-drugs-concludes-ema-review"],
+ ["WHO: Semaglutid och risk för NAION","https://www.who.int/news/item/27-06-2025-27-06-2025-semaglutide-medicines-naion"]
 ];
 const EV={study:"Visat i studier",report:"Rapporterat / trolig mekanism",user:"Användare berättar"};
 const EVSHORT={study:"Studier",report:"Rapporter",user:"Erfarenheter"};
@@ -459,9 +463,62 @@ const LIB=[
  research:"Många användare beskriver att de orkar mer när vikten gått ner en bit, även om de första veckorna kan vara tunga. Det finns inte som mätt utfall i studierna.",
  why:"Mindre vikt att bära, bättre sömn och stabilare blodsocker.",
  tips:["Logga det, särskilt dagar du gjort något du inte orkat förut.","Höj stegmålet lite i taget."],
- care:["Energin svänger kraftigt mellan uppvarvad och utmattad"],src:[]}
+ care:["Energin svänger kraftigt mellan uppvarvad och utmattad"],src:[]},
+{id:"pancreas",cat:"mage",name:"Ont högt upp i magen",ev:"study",phase:[],short:"Kraftig smärta som kan stråla mot ryggen",
+ research:"Inflammation i bukspottkörteln, pankreatit, är en känd men ovanlig risk för hela gruppen GLP-1-läkemedel. I fas 2-studien med retatrutid inträffade ett fall i 12 mg-gruppen. Det är sällsynt, men viktigt att känna igen.",
+ why:"Orsaken är inte helt klarlagd. Gallsten, mycket alkohol och höga blodfetter ökar risken.",
+ when:"Kan komma när som helst. Smärtan är ofta ihållande och svår, inte krampaktig som vanlig magknip.",
+ tips:["Vanlig magknip efter dosen brukar gå över på några timmar och lätta när du rör på dig.","Undvik mycket alkohol."],
+ care:["Svår, ihållande smärta högt upp i magen, ofta mot ryggen: sök vård direkt via 1177 eller akuten","Smärta tillsammans med kräkningar eller feber"],src:[17,20]},
+{id:"vision",cat:"ovrigt",name:"Plötslig synförändring",ev:"report",phase:[],short:"Suddig syn eller synbortfall på ett öga",
+ research:"För semaglutid (Ozempic, Wegovy) har den europeiska läkemedelsmyndigheten EMA bedömt att en skada på synnerven, NAION, är en mycket sällsynt biverkning, som drabbar upp till 1 av 10 000. Det är inte känt om samma sak gäller retatrutid.",
+ why:"Det handlar om nedsatt blodflöde till synnerven. Mekanismen är inte klarlagd.",
+ tips:["Gradvis ändrad syn kan också bero på förändrat blodsocker. Boka då en synundersökning."],
+ care:["Plötslig synnedsättning eller synbortfall, oftast på ett öga och utan smärta: sök vård samma dag"],src:[23,24]},
+{id:"nightsweat",cat:"somn",name:"Nattsvett",ev:"user",phase:["rise","peak"],short:"Vaknar svettig, blöta lakan",
+ research:"Nattsvett finns inte med som biverkning i studierna, men användare berättar om det, ofta tillsammans med värmekänsla och sämre sömn.",
+ why:"Glukagondelen ökar värmeproduktionen, samtidigt som kroppen normalt sänker temperaturen på natten. Lågt blodsocker kan också ge svettningar.",
+ when:"Oftast nätterna efter dosen.",
+ tips:["Svalt sovrum och tunt täcke.","Drick ett glas vatten före sänggåendet och ha ett vid sängen.","Logga det tillsammans med sömnen, så ser du om de följer dosdagarna."],
+ care:["Nattsvett tillsammans med feber, oväntad viktnedgång eller långvarig hosta","Svettning med darrighet och förvirring om du tar diabetesmedicin"],src:[16]},
+{id:"anxiety",cat:"somn",name:"Oro och nervositet",ev:"user",phase:["rise"],short:"Inre stress, svårt att slappna av",
+ research:"Ökad energi, förhöjd puls och sömnlöshet hör till det användare oftast rapporterar, och en del beskriver det som en orolig eller stressad känsla. Det finns inte med i studierna.",
+ why:"Högre puls och energipåslag kan kännas som oro i kroppen. Lite mat och sämre sömn förstärker det.",
+ when:"Ofta dagarna efter dos.",
+ tips:["Lugn andning: in på fyra, ut på sex, i några minuter.","Minska koffein dagarna efter dos.","Ät regelbundet, även om aptiten är låg."],
+ care:["Panikattacker eller oro som påverkar vardagen","Hjärtklappning som inte går över, bröstsmärta eller svimning"],src:[8]},
+{id:"itch",cat:"kropp",name:"Klåda",ev:"user",phase:["peak"],short:"Kliar på kroppen utan synliga utslag",
+ research:"Klåda nämns av användare, ibland tillsammans med den känsliga huden (dysestesi) som finns beskriven i studierna. Torr hud kan också bidra.",
+ why:"Ändrad känsel i huden, torr hud och för lite vätska kan alla ge klåda.",
+ tips:["Mjukgörande kräm direkt efter duschen.","Ljummet istället för varmt vatten.","Drick ordentligt."],
+ care:["Utslag, nässelfeber eller svullnad","Svullnad i ansikte eller svalg, eller svårt att andas: ring 112"],src:[1]},
+{id:"bruise",cat:"kropp",name:"Blåmärke vid sticket",ev:"user",phase:["rise"],short:"Blått eller ömt där du injicerat",
+ research:"Små blåmärken vid injektionsstället är vanliga vid alla injektioner under huden och brukar försvinna inom en vecka.",
+ why:"Nålen kan träffa ett litet blodkärl.",
+ tips:["Tryck lätt med en kompress i några sekunder efter sticket, utan att massera.","Rotera ställen. Appen föreslår nästa ställe under Logga."],
+ care:["Blåmärket växer, blir hårt, varmt eller mycket ömt","Du får många blåmärken på andra ställen också"],src:[]},
+{id:"breath",cat:"mat",name:"Dålig andedräkt",ev:"user",phase:["peak"],short:"Konstig smak i munnen, andedräkten luktar",
+ research:"Användare berättar ofta om dålig andedräkt. Det hänger troligen ihop med torr mun, att man äter lite och ibland med svavelrapningar.",
+ why:"Mindre saliv gör att bakterier trivs. Vid väldigt lite kolhydrater kan kroppen dessutom bilda ketoner, som luktar.",
+ tips:["Drick regelbundet och tugga sockerfritt tuggummi.","Borsta tungan.","Ät något med kolhydrater varje dag."],
+ care:["Fruktig lukt tillsammans med illamående, kräkningar och trötthet om du har diabetes"],src:[13]},
+{id:"hiccup",cat:"mage",name:"Hicka",ev:"user",phase:["rise","peak"],short:"Hickar ofta, särskilt efter maten",
+ research:"Hicka nämns av en del användare av GLP-1-läkemedel. Det är inte beskrivet som biverkning i studierna.",
+ why:"En full och långsam magsäck kan reta diafragman, muskeln som ger hickan.",
+ tips:["Ät långsamt och mindre portioner.","Undvik kolsyrat.","Drick några klunkar kallt vatten eller håll andan en stund."],
+ care:["Hicka som håller i sig mer än två dygn"],src:[]},
+{id:"aches",cat:"kropp",name:"Värk i muskler och leder",ev:"user",phase:["rise"],short:"Ömmande kropp, stela leder",
+ research:"Kroppsvärk är något användare beskriver, ofta dagen efter dos tillsammans med influensakänsla. Det finns inte med som biverkning i studierna.",
+ why:"Lite mat, vätska och salt, och kroppens reaktion när nivån stiger, är möjliga förklaringar.",
+ tips:["Drick och få i dig lite salt.","Lätt rörelse och stretching.","Se till att proteinet räcker."],
+ care:["Kraftig muskelsmärta och svaghet, särskilt med mörk urin","Svullen, röd och varm led"],src:[]},
+{id:"looseskin",cat:"kropp",name:"Lösare hud",ev:"user",phase:[],short:"Huden i ansiktet eller på kroppen blir slappare",
+ research:"Vid snabb och stor viktnedgång kan huden bli lösare och ansiktet se tunnare ut. Det kallas ibland Ozempic face och beror på viktnedgången, inte på läkemedlet i sig.",
+ why:"Huden hinner inte dra ihop sig lika snabbt som fettet minskar.",
+ tips:["Protein och styrketräning hjälper kroppen att behålla formen.","Drick ordentligt och använd solskydd.","Ha tålamod. Huden drar ihop sig en del med tiden."],
+ care:["Sår eller hudirritation i hudveck"],src:[]}
 ];
-const ALARM=["Svår, ihållande buksmärta, särskilt om den strålar mot ryggen (kan vara bukspottkörteln)","Smärta under höger revbensbåge, feber eller gulfärgad hud/ögon (gallan)","Du kan inte behålla vätska eller blir kraftigt uttorkad","Bröstsmärta, svimning eller hjärtklappning som inte går över","Svullnad i ansikte/svalg eller andningsbesvär"];
+const ALARM=["Svår, ihållande buksmärta, särskilt om den strålar mot ryggen (kan vara bukspottkörteln)","Smärta under höger revbensbåge, feber eller gulfärgad hud/ögon (gallan)","Du kan inte behålla vätska eller blir kraftigt uttorkad","Bröstsmärta, svimning eller hjärtklappning som inte går över","Svullnad i ansikte/svalg eller andningsbesvär","Plötslig synnedsättning eller synbortfall"];
 
 /* ---------- Tillstånd ---------- */
 const HOUR=3600e3, DAY=24*HOUR, SITES=["Mage V","Mage H","Lår V","Lår H","Arm V","Arm H"];
@@ -565,6 +622,7 @@ function vIdag(){
   ${tip?`<section class="panel"><span class="eyebrow">Dagens tips · ${tip.x.name}</span><p>${tip.t}</p></section>`:""}
   <section class="section"><span class="eyebrow">Hur mår du idag? Tryck för att logga</span>
    <div class="chips">${LIB.slice(0,14).map(x=>`<button class="chip ${todays.includes(x.id)?"on":""}" data-card="${x.id}">${x.name}</button>`).join("")}<button class="chip" data-tab="bibliotek">Fler…</button></div></section>
+  ${insightPanel()}
   ${vPatterns()}
   ${foot()}`;
 }
@@ -993,6 +1051,44 @@ function calendarPanel(){
    <div class="cal">${["M","T","O","T","F","L","S"].map(w=>`<span class="cal-wd">${w}</span>`).join("")}${cells}</div>
    <div class="legend"><span><i class="lg-dose"></i>Dosdag</span><span><i class="lg-s1"></i>Lätt</span><span><i class="lg-s2"></i>Måttlig</span><span><i class="lg-s3"></i>Kraftig</span></div>
    ${detail}</section>`}
+/* ---------- Insikter ---------- */
+function insights(D){
+  const out=[],ds=sorted(D.doses),sy=D.symptoms||[],food=D.food||{},now=Date.now();
+  if(!ds.length) return out;
+  patterns().forEach(p=>{if(p.tot>=3){const x=byId(p.id);if(x&&p.arr[p.top]/p.tot>=.5)out.push({s:2+p.tot/10,c:p.id,t:`${x.name} loggar du oftast ${dLabel(p.top)}, ${p.arr[p.top]} av ${p.tot} gånger.`})}});
+  const start=ds[0].t,span=(now-start)/DAY;
+  if(span>=28)[...new Set(sy.map(s=>s.id))].forEach(id=>{const x=byId(id);if(!x)return;const e=sy.filter(s=>s.id===id&&s.t<start+14*DAY).length,l=sy.filter(s=>s.id===id&&s.t>now-14*DAY).length;
+    if(e>=3&&l<=e/2)out.push({s:3,c:id,t:`${x.name} har minskat. Du loggade det ${e} gånger de första två veckorna och ${l} gånger de senaste två.`});
+    else if(span>=42&&l>=3&&l>=e*2)out.push({s:2.5,c:id,t:`${x.name} har blivit vanligare: ${l} gånger de senaste två veckorna mot ${e} i början.`})});
+  let inc=null;for(let i=1;i<ds.length;i++)if(ds[i].mg>ds[i-1].mg)inc=ds[i];
+  if(inc&&now-inc.t>=10*DAY){const a=sy.filter(s=>s.t>=inc.t&&s.t<inc.t+14*DAY).length,b=sy.filter(s=>s.t<inc.t&&s.t>=inc.t-14*DAY).length;
+    if(a+b>=4&&a>=b*1.5)out.push({s:2.5,t:`Efter dosökningen till ${num(inc.mg,inc.mg%1?1:0)} mg loggade du ${a} symptom på två veckor, mot ${b} veckorna innan. Det är vanligt att biverkningarna ökar en tid efter en höjning.`});
+    else if(a+b>=4&&b>=a*1.5)out.push({s:2,t:`Dosökningen till ${num(inc.mg,inc.mg%1?1:0)} mg verkar ha gått bra. Du loggade ${a} symptom veckorna efter, mot ${b} innan.`})}
+  const ev=ds.filter(d=>new Date(d.t).getHours()>=16),mo=ds.filter(d=>new Date(d.t).getHours()<12),bad=d=>sy.some(s=>s.id==="sleep"&&s.t>d.t&&s.t<d.t+36*3600e3);
+  if(ev.length>=2&&mo.length>=2){const e=ev.filter(bad).length,m=mo.filter(bad).length;if(Math.abs(e/ev.length-m/mo.length)>=.4)out.push({s:3,c:"sleep",t:`Sömnproblem efter kvällsdoser: ${e} av ${ev.length} gånger. Efter morgondoser: ${m} av ${mo.length}. ${e/ev.length>m/mo.length?"Morgondoser verkar passa dig bättre.":"Kvällsdoser verkar passa dig bättre."}`})}
+  const nb=Array.from({length:8},()=>[]);Object.keys(food).forEach(k=>{const v=food[k].noise;if(!v)return;const d=dayAfter(new Date(k+"T12:00").getTime(),ds);if(d!=null&&d<=7)nb[d].push(v)});
+  const have=nb.map((a,i)=>a.length?[a.reduce((x,y)=>x+y,0)/a.length,i]:null).filter(Boolean);
+  if(have.length>=4&&nb.flat().length>=7){const hi=have.reduce((a,b)=>b[0]>a[0]?b:a),lo=have.reduce((a,b)=>b[0]<a[0]?b:a);if(hi[0]-lo[0]>=1.5)out.push({s:3,c:"noise",t:`Matbruset är högst ${dLabel(hi[1])} (snitt ${num(hi[0])}) och lägst ${dLabel(lo[1])} (snitt ${num(lo[0])}). Planera gärna in extra protein de dagar suget brukar komma.`})}
+  const goal=proteinGoal(D),avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  if(goal){const days=Object.keys(food).filter(k=>proteinOn(D,k)>0),met=days.filter(k=>proteinOn(D,k)>=goal),not=days.filter(k=>proteinOn(D,k)<goal),rate=a=>a.reduce((n,k)=>n+sy.filter(s=>dk(s.t)===k).length,0)/a.length;
+    if(met.length>=4&&not.length>=4){const a=rate(met),b=rate(not);if(Math.abs(a-b)>=.5)out.push({s:2,t:`De dagar du når proteinmålet loggar du i snitt ${num(a)} symptom, mot ${num(b)} de andra dagarna.`})}
+    const nm=met.map(k=>noiseOn(D,k)).filter(Boolean),nn=not.map(k=>noiseOn(D,k)).filter(Boolean);
+    if(nm.length>=3&&nn.length>=3){const a=avg(nm),b=avg(nn);if(Math.abs(a-b)>=.8)out.push({s:2.5,c:"noise",t:`Matbruset är ${a<b?"lägre":"högre"} de dagar du når proteinmålet: ${num(a)} mot ${num(b)} i snitt.`})}}
+  const sg=(D.settings||{}).stepGoal||8000,sd=Object.keys(food).filter(k=>food[k].steps!=null&&food[k].noise);
+  if(sd.length>=6){const hi=sd.filter(k=>food[k].steps>=sg),lo=sd.filter(k=>food[k].steps<sg);if(hi.length>=3&&lo.length>=3){const a=avg(hi.map(k=>food[k].noise)),b=avg(lo.map(k=>food[k].noise));if(Math.abs(a-b)>=.8)out.push({s:2,t:`De dagar du når stegmålet är matbruset i snitt ${num(a)}, mot ${num(b)} övriga dagar.`})}}
+  const W=sorted(D.weights||[]);
+  if(W.length>=2){const f=W[0],l=W[W.length-1],d=l.kg-f.kg,wks=(l.t-f.t)/(7*DAY);
+    if(wks>=1&&d<0)out.push({s:2.2,t:`Du har gått ner ${num(-d)} kg (${num(-d/f.kg*100)} %) sedan ${fmtD(f.t)}, i snitt ${num(-d/wks)} kg i veckan.`});
+    const r=W.filter(w=>w.t>=now-16*DAY);if(r.length>=3&&f.t<now-21*DAY){const ks=r.map(w=>w.kg);if(Math.max(...ks)-Math.min(...ks)<.5)out.push({s:2.4,c:"muscle",t:"Vikten har stått nästan still de senaste två veckorna. Platåer är vanliga och brukar släppa. Kolla protein, vätska och sömn, och mät gärna midjan."})}}
+  const l3=ds.slice(-3).map(d=>d.site).filter(Boolean);if(l3.length===3&&new Set(l3).size===1)out.push({s:2,c:"bruise",t:`Dina tre senaste doser tog du i ${l3[0]}. Att rotera mellan ställen minskar risken för irritation och blåmärken.`});
+  let st=0;for(let i=0;i<60;i++){if(noiseOn(D,dk(now-i*DAY)))st++;else if(i===0)continue;else break}if(st>=5)out.push({s:1,t:`Du har loggat matbrus ${st} dagar i rad. Ju mer du loggar, desto säkrare blir insikterna.`});
+  return out.sort((a,b)=>b.s-a.s);
+}
+function insItems(L){return `<ul class="ins">${L.map(i=>`<li>${i.t}${i.c&&byId(i.c)?` <button class="lnk" data-card="${i.c}">Läs mer</button>`:""}</li>`).join("")}</ul>`}
+function insightPanel(){const L=insights(data());
+  if(!L.length) return `<section class="panel"><span class="eyebrow">Insikter</span><p class="muted" style="font-size:.9rem">Här dyker mönster upp när du loggat ett tag, till exempel vilken dag efter dosen symptomen brukar komma, eller om matbruset hänger ihop med proteinet.</p></section>`;
+  return `<section class="panel"><span class="eyebrow">Insikter från dina loggar</span>${insItems(L.slice(0,3))}${L.length>3?`<button class="btn ghost small" data-allins="1">Visa alla ${L.length} insikter</button>`:""}<p class="muted" style="font-size:.8rem">Mönster i dina egna loggar, inte bevis för orsak och verkan.</p></section>`}
+function openInsights(){sheet(`${sheetHead("Insikter")}${insItems(insights(data()))}<p class="muted" style="font-size:.85rem">Insikterna bygger på det du själv loggat. De visar mönster, inte orsak och verkan, och blir säkrare ju längre du loggar.</p>`)}
 function vKostInner(){
   const D=data(), today=dk(), goal=proteinGoal(D), p=proteinOn(D,today), pct=goal?Math.min(100,p/goal*100):0, s=D.settings||{};
   const days=lastDays(7), lab=days.map(k=>new Date(k+"T12:00").toLocaleDateString("sv-SE",{weekday:"short"}).replace(".",""));
@@ -1140,6 +1236,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.noise){ensureReal();const k=dk(),day=state.food[k]=state.food[k]||{},n=+t.dataset.noise;day.noise=day.noise===n?null:n;persist();render();return}
   if(t.dataset.cal){calOff=Math.min(0,calOff+(+t.dataset.cal));calSel=null;render();return}
   if(t.dataset.calday){calSel=calSel===t.dataset.calday?null:t.dataset.calday;render();return}
+  if(t.dataset.allins){openInsights();return}
   if(t.id==="saveDose"){
     const dt=$("#dt").value, mg=parseFloat(($("#mg").value||"").replace(",","."));
     if(!dt||!(mg>0)){toast("Fyll i datum och dos i mg.");return}
