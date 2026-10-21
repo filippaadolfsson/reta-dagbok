@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0F6E5C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Reta-dagboken">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Reta-dagboken</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: mobilapp, en kolumn max 560px, flikar i botten. Ton: kliniskt lugn journal med mineralgrönt. */
+:root{
+  --bg:#EAEFEE; --surface:#FFFFFF; --sunk:#DDE5E3; --ink:#13221F; --muted:#56665F; --line:#C9D4D1;
+  --accent:#0F6E5C; --accent-soft:#D3E9E3; --curve:#0F6E5C; --curve-fill:rgba(15,110,92,.14);
+  --ok:#2E7D4F; --ok-soft:#DCEFE3; --warn:#9A6200; --warn-soft:#F6E7C8; --alert:#B2382E; --alert-soft:#F7DEDA;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1817; --surface:#172422; --sunk:#0B1312; --ink:#E4EEEB; --muted:#93A6A0; --line:#2A3B38;
+  --accent:#4FC1A6; --accent-soft:#173B34; --curve:#4FC1A6; --curve-fill:rgba(79,193,166,.16);
+  --ok:#6CCB92; --ok-soft:#163323; --warn:#E3B055; --warn-soft:#3A2D12; --alert:#F08A7F; --alert-soft:#3D1E1B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1817; --surface:#172422; --sunk:#0B1312; --ink:#E4EEEB; --muted:#93A6A0; --line:#2A3B38;
+  --accent:#4FC1A6; --accent-soft:#173B34; --curve:#4FC1A6; --curve-fill:rgba(79,193,166,.16);
+  --ok:#6CCB92; --ok-soft:#163323; --warn:#E3B055; --warn-soft:#3A2D12; --alert:#F08A7F; --alert-soft:#3D1E1B; color-scheme:dark}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:16px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:560px;margin:0 auto;padding-block:20px 110px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.9rem;line-height:1.1}
+h2{font-size:1.25rem}
+h3{font-size:1.05rem}
+p{margin:0}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.section{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.banner{background:var(--warn-soft);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:.92rem}
+.banner b{color:var(--warn)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{background:var(--accent);color:var(--surface);border:0;border-radius:10px;padding:11px 16px;font-weight:700}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn.small{padding:7px 12px;font-size:.9rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* Statusrad */
+.status{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.status div{background:var(--surface);padding:12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.status .v{font-family:var(--f-mono);font-size:1.35rem;font-weight:600;font-variant-numeric:tabular-nums}
+.status .k{font-size:.75rem;color:var(--muted)}
+/* Veckobana */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.week span{height:30px;border-radius:6px;background:var(--sunk);display:grid;place-items:center;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.week span.on{background:var(--accent);color:var(--surface);font-weight:600}
+.week span.past{background:var(--accent-soft);color:var(--accent)}
+/* Symptomlista */
+.slist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.sitem{display:flex;align-items:center;gap:12px;padding:12px 2px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%}
+.sitem .t{flex:1;min-width:0}
+.sitem .t b{display:block}
+.sitem .t small{color:var(--muted);font-size:.85rem}
+.chev{color:var(--muted);font-family:var(--f-mono)}
+.ev{font-size:.7rem;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:99px;white-space:nowrap}
+.ev.study{background:var(--ok-soft);color:var(--ok)}
+.ev.report{background:var(--warn-soft);color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 13px;font-size:.92rem}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+/* Flikar */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));z-index:20}
+.tabs nav{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs button{background:none;border:0;padding:12px 4px 10px;font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px}
+.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
+/* Formulär */
+label{display:flex;flex-direction:column;gap:5px;font-size:.88rem;color:var(--muted);font-weight:700}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sites{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.site{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 4px;font-size:.85rem;text-align:center}
+.site.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.site.tip{border-style:dashed;border-color:var(--accent)}
+.hist{display:flex;flex-direction:column}
+.hist div{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.hist div span:first-child{flex:1;min-width:0}
+.x{background:none;border:0;color:var(--muted);padding:4px 8px;font-size:1.1rem}
+/* Kort-ark */
+.sheet-bg{position:fixed;inset:0;background:rgba(10,20,18,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:600px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:20px max(18px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.sheet h4{font-family:var(--f-display);font-size:.95rem;margin:0}
+.sheet ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.care{background:var(--alert-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.care h4{color:var(--alert)}
+.srcs{font-size:.82rem;color:var(--muted)}
+.srcs a{color:var(--accent)}
+.sev{display:flex;gap:6px}
+.sev button{flex:1;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 4px;font-size:.9rem}
+.sev button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:.9rem;z-index:50}
+/* Diagram */
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;background:var(--curve);vertical-align:middle;margin-right:6px}
+.legend i.dash{background:repeating-linear-gradient(90deg,var(--curve) 0 5px,transparent 5px 9px)}
+.pattern{display:flex;flex-direction:column;gap:8px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;font-size:.92rem}
+.bars{display:grid;grid-template-columns:repeat(8,14px);gap:3px;align-items:end;height:26px}
+.bars span{background:var(--accent);border-radius:2px;min-height:2px}
+.bars span.z{background:var(--sunk)}
+.search{width:100%}
+.foot{font-size:.8rem;color:var(--muted);line-height:1.45}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="tabs"><nav role="tablist" id="tabs"></nav></div>
+<div id="layer"></div>
+
+<script>
+/* ---------- Kunskapsbibliotek ---------- */
+const SRC=[
+ ["Lilly Medical: Vad är retatrutid? (halveringstid)","https://medical.lilly.com/us/products/answers/what-is-retatrutide-233361"],
+ ["Lilly Medical: Dysestesi i TRIUMPH-studierna","https://medical.lilly.com/us/products/answers/was-dysesthesia-reported-as-an-adverse-event-in-the-retatrutide-triumph-trials-in-patients-with-overweight-or-obesity-387925"],
+ ["Endocrine News: TRIUMPH-1 (maj 2026)","https://endocrinenews.endocrine.org/pharma-friday-may-22-2026/"],
+ ["Doximity: TRIUMPH-1 sammanfattning","https://opmed.doximity.com/articles/retatrutide-reduces-body-weight-by-nearly-30-in-phase-3-triumph-1-trial-with-gains-for-sleep-apnea-and-knee-pain"],
+ ["Lilly topline: TRIUMPH-2 och -3","https://www.webull.com/news/15276220155438080"],
+ ["Pharmacy Times: TRIUMPH-1 för farmaceuter","https://www.pharmacytimes.com/view/what-pharmacists-need-to-know-about-retatrutide-s-triumph-1-phase-3-results"],
+ ["Fas 2-studien (NEJM 2023), sammanfattning","https://mdnewsline.com/efficacy-and-safety-of-retatrutide-for-the-treatment-of-obesity/"],
+ ["Fas 2 typ 2-diabetes (DDG 2024)","https://www.thieme-connect.de/products/ejournals/abstract/10.1055/s-0044-1785379"],
+ ["Sehgal m.fl. 2026: Självrapporterade biverkningar på Reddit","https://mediawell.ssrc.org/?p=516888"],
+ ["Second Nature: Retatrutid, puls och hjärtrytm","https://secondnature.io/us/guides/weight-loss-medications/retatrutide-side-effects"],
+ ["Bolt Pharmacy: Sömnproblem på retatrutid","https://www.boltpharmacy.co.uk/guide/cant-sleep-on-retatrutide"],
+ ["Second Nature: Hunger innan nästa dos","https://www.secondnature.io/us/guides/weight-loss-medications/mounjaro-wear-off-after-5-days"],
+ ["Healthline: Vätska på GLP-1","https://healthline.com/health/drugs/staying-hydrated-while-taking-glp-1s"],
+ ["Second Nature: Törst och torr mun på GLP-1","https://www.secondnature.io/guides/lifestyle/glp1s/does-mounjaro-make-you-thirsty"],
+ ["Oviva: Retatrutid-biverkningar","https://oviva.com/uk/en/retatrutide-side-effects/"],
+ ["The Rx Index: Biverkningar per dos i fas 3","https://therxindex.com/guides/retatrutide-side-effects/"],
+ ["Superpower: Så fungerar glukagondelen","https://superpower.com/guides/retatrutide"],
+ ["2 Minute Medicine: Fas 2-studien","https://2minutemedicine.com/retatrutide-effectively-reduces-body-weight-in-patients-with-obesity"]
+];
+const EV={study:"Visat i studier",report:"Rapporterat / trolig mekanism"};
+/* phase: när i veckan det brukar märkas. rise=dag 0–1, peak=dag 2–4, low=dag 5+ ; esc=vid dosökning/uppstart */
+const LIB=[
+{id:"sleep",name:"Svårt att sova",ev:"report",phase:["rise"],short:"Insomning, tidiga uppvaknanden, orolig sömn",
+ research:"Sömnproblem har rapporterats av en del deltagare i studierna, men ett säkert orsakssamband är inte fastställt. Bland användare utanför studierna är sömnlöshet däremot en av de vanligaste rapporterna, tillsammans med trötthet, ökad energi och förhöjd puls.",
+ why:"Flera saker kan spela in: glukagondelen höjer energiförbrukning och vilopuls, illamående och magbesvär kan störa natten, och kroppen får mindre energi än vanligt.",
+ when:"Oftast dagarna närmast dosen och under upptrappningen. Biverkningar är generellt vanligast i början och efter dosökning.",
+ tips:["Testa att ta dosen på morgonen istället för kvällen och se om mönstret ändras.","Ingen koffein efter lunch, särskilt dag 0–2.","Ät ett proteinrikt mellanmål på kvällen om du gått till sängs hungrig.","Svalt sovrum. Värmekänsla och sömnproblem hänger ofta ihop."],
+ care:["Sömnproblemen håller i sig i flera veckor","Du får hjärtklappning, ihållande hög puls eller ångest på natten"],src:[10,8]},
+{id:"skin",name:"Känslig hud",ev:"study",phase:["peak","esc"],short:"Brännande, stickande eller öm hud vid beröring (dysestesi)",
+ research:"Dysestesi är en ny biverkning som är mer typisk för retatrutid än för andra GLP-1-läkemedel. I TRIUMPH-1 hade 5,1 % (4 mg), 12,3 % (9 mg) och 12,5 % (12 mg) det, mot 0,9 % på placebo. Det var oftast milt till måttligt och gick för de flesta över under pågående behandling. Huden ser oftast helt normal ut.",
+ why:"Orsaken är inte klarlagd. Det verkar handla om nervernas känsel snarare än om huden i sig, och det blir vanligare vid högre doser.",
+ when:"Vanligare vid högre doser och i perioder efter dosökning, men kan dyka upp tidigare.",
+ tips:["Mjuka, sömlösa plagg och ljummet istället för varmt vatten.","Notera var på kroppen det sitter och hur länge. Det är värdefullt för läkaren.","Logga det här med styrka, så ser du om det följer dosdagarna."],
+ care:["Du får synliga utslag, blåsor eller svullnad","Domningar, svaghet eller känselbortfall","Det sprider sig eller stör sömn och vardag mer än några veckor"],src:[2,1,5]},
+{id:"heat",name:"Värmekänsla och vallningar",ev:"report",phase:["rise","peak"],short:"Varm i kroppen, svettas, rodnar",
+ research:"Värmekänsla är inte en tydligt redovisad biverkning i studierna. Mekanismen är däremot välkänd: glukagondelen ökar energiförbrukningen och fettförbränningen, vilket bildar värme.",
+ why:"Kroppen går på högre varv i vila. Det är en del av hur retatrutid skiljer sig från Wegovy och Mounjaro.",
+ when:"Många märker det mest de första dagarna efter dos och efter dosökning.",
+ tips:["Klä dig i lager och sov svalt.","Drick mer och få i dig lite salt om du svettas.","Logga vallningarna tillsammans med puls och sömn, de hänger ofta ihop."],
+ care:["Feber eller frossa","Svettningar tillsammans med hjärtklappning, yrsel eller bröstsmärta"],src:[16]},
+{id:"pulse",name:"Förhöjd puls",ev:"study",phase:["rise","peak"],short:"Högre vilopuls, känner hjärtat slå",
+ research:"Fas 2-studien visade en dosberoende pulsökning som var störst runt vecka 24 och sedan minskade. Ökningen är större än för Mounjaro och Wegovy. Oregelbundna hjärtslag rapporterades hos 2–11 % mot cirka 2 % på placebo, och inga av dem klassades som allvarliga.",
+ why:"Glukagonreceptorn höjer energiförbrukningen i vila, vilket brukar ge högre puls.",
+ when:"Följer ofta dosen och dosnivån. Kan vara mer märkbart första halvåret.",
+ tips:["Följ vilopulsen i klockan på morgonen, samma tid varje dag.","Dra ner på koffein och nikotin.","Drick ordentligt. Uttorkning höjer pulsen."],
+ care:["Hjärtklappning som inte går över eller känns oregelbunden","Bröstsmärta, svimning, kraftig yrsel eller andfåddhet"],src:[6,9,5]},
+{id:"energy",name:"Energipåslag och rastlöshet",ev:"report",phase:["rise"],short:"Uppvarvad, stressad, svårt att varva ner",
+ research:"Ökad energi är en av de vanligaste rapporterna bland användare utanför studierna, men det är inte beskrivet som en biverkning i de publicerade studierna.",
+ why:"Högre ämnesomsättning och puls kan kännas som ett energipåslag. Mindre mat kan också ge en uppvarvad känsla.",
+ when:"Ofta dagarna efter dos.",
+ tips:["Använd energin dagtid: promenad eller träning tidigt.","Lägg en fast nedvarvningsrutin på kvällen.","Se till att du äter tillräckligt, även om du inte är hungrig."],
+ care:["Ångest, panikkänsla eller tankar som skenar","Energipåslag tillsammans med hjärtklappning"],src:[8]},
+{id:"nausea",name:"Illamående",ev:"study",phase:["rise","esc"],short:"Den vanligaste biverkningen",
+ research:"Illamående är vanligast av alla biverkningar. I TRIUMPH-1 hade 28,6 % (4 mg), 38,4 % (9 mg) och 42,4 % (12 mg) det, mot 14,8 % på placebo. Det var oftast milt till måttligt och kom främst under upptrappningen.",
+ why:"Magsäcken töms långsammare och mättnadssignalerna i hjärnan förstärks.",
+ when:"Dag 0–2 efter dos och veckorna efter en dosökning. Brukar lätta efter några veckor på samma dos.",
+ tips:["Små portioner, och sluta vid första mättnadskänslan.","Undvik fet och stekt mat de första dagarna efter dos.","Ingefära eller pepparmynta, och luta dig inte bakåt direkt efter maten."],
+ care:["Du kan inte behålla vätska på ett dygn","Kraftig magsmärta, särskilt om den strålar mot ryggen"],src:[15,6,7]},
+{id:"stomach",name:"Magproblem: diarré",ev:"study",phase:["rise","peak","esc"],short:"Lös mage, kurrande, gaser",
+ research:"I TRIUMPH-1 hade 25–34 % diarré beroende på dos, mot 13,5 % på placebo. Liksom illamående kom det mest under upptrappningen.",
+ why:"Ändrad tarmrörelse och matsmältning när magsäcken töms långsammare.",
+ when:"Vanligast första veckorna och efter dosökning.",
+ tips:["Drick extra och få i dig salt, till exempel buljong eller vätskeersättning.","Minska fett och mycket fiber tillfälligt."],
+ care:["Blod i avföringen eller feber","Tecken på uttorkning eller diarré mer än 2–3 dagar"],src:[15]},
+{id:"constipation",name:"Magproblem: förstoppning",ev:"study",phase:["peak","low"],short:"Trög mage, hård avföring, uppblåst",
+ research:"Cirka 24–26 % fick förstoppning i TRIUMPH-1, mot 10,9 % på placebo.",
+ why:"Långsammare tarm, mindre mat och ofta för lite vätska.",
+ when:"Kommer ofta lite senare i veckan än illamåendet.",
+ tips:["Drick enligt schema, inte efter törst.","Öka fibrer gradvis och ta en daglig promenad.","Fråga på apoteket om receptfria medel om det inte släpper."],
+ care:["Ingen avföring på flera dagar tillsammans med kräkning eller svullen, öm mage"],src:[15]},
+{id:"vomit",name:"Kräkningar",ev:"study",phase:["rise","esc"],short:"Kräks efter mat eller utan förvarning",
+ research:"Runt en fjärdedel kräktes vid högsta dosen i TRIUMPH-1. Vid lägre doser var det betydligt ovanligare.",
+ why:"Samma mekanism som illamående, ofta när man ätit mer än magen hinner med.",
+ when:"Främst vid dosökning och dagarna efter dos.",
+ tips:["Mindre portioner, ät långsamt.","Ersätt vätska och salt efter varje kräkning."],
+ care:["Upprepade kräkningar eller du kan inte behålla vätska","Kräkning med svår buksmärta"],src:[15]},
+{id:"reflux",name:"Halsbränna och rapningar",ev:"study",phase:["rise","peak"],short:"Sura uppstötningar, rapningar, matsmältningsbesvär",
+ research:"Matsmältningsbesvär (dyspepsi) fanns bland de vanliga mag-tarmbiverkningarna i fas 2-studien.",
+ why:"Maten ligger kvar längre i magsäcken.",
+ tips:["Ät inte de sista 3 timmarna före sänggåendet.","Höj huvudänden på sängen.","Mindre kolsyra och fet mat."],
+ care:["Svårt att svälja eller smärta bakom bröstbenet"],src:[17]},
+{id:"drymouth",name:"Torr mun och törst",ev:"report",phase:["peak"],short:"Torr mun, klibbig känsla, törstig",
+ research:"Torr mun är inte en tydligt redovisad biverkning för retatrutid. För GLP-1-läkemedel i stort finns forskning som visar att man dricker mindre, oberoende av aptiten.",
+ why:"Törstsignalen dämpas, du äter mindre (och får mindre vätska via maten) och eventuellt illamående gör att du dricker mindre.",
+ when:"Ofta en bit in i veckan när du ätit och druckit mindre några dagar.",
+ tips:["Drick enligt schema, till exempel ett glas varje timme dagtid.","Sockerfritt tuggummi eller sugtabletter. Torr mun ökar risken för karies.","Kolla urinens färg: ljusgul är målet."],
+ care:["Yrsel, mörk urin eller att du kissar mycket lite","Muntorrhet som inte går över trots att du dricker"],src:[13,12]},
+{id:"hunger",name:"Ökad hunger på morgonen",ev:"report",phase:["low","start"],short:"Hungrig, sug, matbrus, särskilt före nästa dos",
+ research:"Med veckodoser är nivån i kroppen lägst dagarna innan nästa dos, och många märker att hungern kommer tillbaka då. I början har läkemedlet inte hunnit byggas upp. Med en halveringstid runt 6 dagar tar det ungefär 4–5 veckor på samma dos att nå en stabil nivå. Ökad aptit är faktiskt den vanligaste rapporten bland användare utanför studierna.",
+ why:"Låg dos och låg nivå ger svagare aptitdämpning. Efter en natt utan mat är blodsockret och hungersignalerna naturligt högre.",
+ when:"Mest märkbart de första veckorna och dagarna innan nästa dos.",
+ tips:["Proteinrik frukost (ägg, kvarg, skyr) håller hungern borta längre.","Drick ett stort glas vatten först. Törst förväxlas lätt med hunger.","Hunger i början betyder inte att det inte fungerar."],
+ care:["Kraftig hunger med darrighet, svettning och yrsel (kan vara lågt blodsocker, särskilt om du har diabetesmedicin)"],src:[11,0,8]},
+{id:"appetite",name:"Ingen aptit, glömmer att äta",ev:"study",phase:["rise","peak"],short:"Blir mätt direkt, äter för lite",
+ research:"Minskad aptit är själva huvudeffekten. Risken är att proteinet och vätskan också sjunker, vilket kan påverka muskler, energi och mage.",
+ why:"GLP-1 och GIP dämpar hunger och matbrus i hjärnan.",
+ when:"Starkast dagarna efter dos.",
+ tips:["Sätt ett proteinmål per måltid istället för att äta efter hunger.","Ät på fasta tider även utan hunger.","Drickbart protein är lättare när maten tar emot."],
+ care:["Du går ner väldigt snabbt, känner dig svag eller svimfärdig"],src:[14]},
+{id:"fatigue",name:"Trötthet",ev:"study",phase:["peak","low"],short:"Orkeslös, tung i kroppen",
+ research:"Trötthet rapporterades oftare vid högre doser i TRIUMPH-1. Det brukar avta med tiden.",
+ why:"Mindre energi in, ändrad ämnesomsättning, ibland sämre sömn och för lite vätska.",
+ tips:["Kontrollera protein, vätska och sömn först.","Kort promenad i dagsljus hjälper ofta mer än vila."],
+ care:["Tröttheten är kraftig eller håller i sig länge","Du blir andfådd vid små ansträngningar"],src:[3,14]},
+{id:"dizzy",name:"Yrsel",ev:"study",phase:["peak"],short:"Snurrar när du reser dig, lätt i huvudet",
+ research:"Lågt blodtryck var vanligare med retatrutid än placebo i TRIUMPH-1, och yrsel rapporterades oftare vid högre doser.",
+ why:"Blodtrycket sjunker när vikten går ner, och för lite vätska förstärker det.",
+ tips:["Res dig långsamt, särskilt på morgonen.","Drick ordentligt och få i dig lite salt."],
+ care:["Du svimmar eller nästan svimmar","Du tar blodtrycksmedicin och blir yr. Prata med läkaren"],src:[3]},
+{id:"uti",name:"Sveda när du kissar",ev:"study",phase:[],short:"Kan vara urinvägsinfektion",
+ research:"Urinvägsinfektion var en ny signal i TRIUMPH-1: 7,5–8,8 % mot 5,3 % på placebo, nästan uteslutande hos kvinnor. Infektionerna var milda till måttliga.",
+ why:"Orsaken är inte klarlagd. Mindre vätska kan bidra.",
+ tips:["Drick mer och gå på toa ofta.","Kissa efter samlag."],
+ care:["Sveda, täta trängningar eller blod i urinen","Feber, frossa eller ont i ryggen/flanken"],src:[2]},
+{id:"headache",name:"Huvudvärk",ev:"report",phase:["peak","esc"],short:"Tryck eller värk i huvudet",
+ research:"Inte en framträdande biverkning i studierna. Huvudvärk hänger ofta ihop med för lite vätska, salt eller mat.",
+ why:"Uttorkning och lågt energiintag är de vanligaste orsakerna.",
+ tips:["Ett stort glas vatten och något salt först.","Ät något, även om aptiten är låg."],
+ care:["Plötslig, mycket kraftig huvudvärk","Huvudvärk med synpåverkan, nackstelhet eller feber"],src:[12]},
+{id:"hair",name:"Håravfall",ev:"report",phase:[],short:"Mer hår i borsten",
+ research:"Tillfälligt håravfall är känt vid snabb viktnedgång i allmänhet och brukar visa sig några månader in. Det går oftast tillbaka.",
+ why:"Kroppen prioriterar ner hårväxt vid snabb viktnedgång och lågt intag.",
+ tips:["Håll proteinintaget uppe.","Ha tålamod: det brukar vända inom några månader."],
+ care:["Fläckvis håravfall eller väldigt kraftigt håravfall"],src:[]},
+{id:"site",name:"Rodnad vid sticket",ev:"study",phase:["rise"],short:"Rodnad, klåda eller knöl där du injicerat",
+ research:"Reaktioner vid injektionsstället har rapporterats i fas 2-studierna.",
+ why:"Lokal reaktion i huden.",
+ tips:["Rotera mellan mage, lår och arm. Appen föreslår nästa ställe.","Låt huden torka efter sprit innan du sticker."],
+ care:["Rodnaden växer, blir varm och öm, eller du får feber","Svullnad i ansiktet eller andningsbesvär: ring 112"],src:[14]}
+];
+const ALARM=["Svår, ihållande buksmärta, särskilt om den strålar mot ryggen (kan vara bukspottkörteln)","Smärta under höger revbensbåge, feber eller gulfärgad hud/ögon (gallan)","Du kan inte behålla vätska eller blir kraftigt uttorkad","Bröstsmärta, svimning eller hjärtklappning som inte går över","Svullnad i ansikte/svalg eller andningsbesvär"];
+
+/* ---------- Tillstånd ---------- */
+const HOUR=3600e3, DAY=24*HOUR, SITES=["Mage V","Mage H","Lår V","Lår H","Arm V","Arm H"];
+let state={doses:[],symptoms:[],settings:{halfLife:6}};
+let demo=false, tab="idag";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const byId=id=>LIB.find(x=>x.id===id);
+const fmtD=t=>new Date(t).toLocaleDateString("sv-SE",{weekday:"short",day:"numeric",month:"short"});
+const fmtT=t=>new Date(t).toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
+const num=(n,d=1)=>n.toLocaleString("sv-SE",{minimumFractionDigits:d,maximumFractionDigits:d});
+
+function demoData(){
+  const now=Date.now(), d=[];
+  for(let w=5;w>=0;w--) d.push({t:now-(w*7+1)*DAY-3*HOUR,mg:w>=4?1:2,site:SITES[(5-w)%6]});
+  return {doses:d,symptoms:[
+    {t:now-1*DAY+2*HOUR,id:"sleep",sev:2},{t:now-8*DAY+2*HOUR,id:"sleep",sev:2},{t:now-15*DAY,id:"sleep",sev:1},
+    {t:now-1*DAY,id:"heat",sev:1},{t:now-3*DAY,id:"drymouth",sev:1},{t:now-6*DAY,id:"hunger",sev:2},{t:now-13*DAY,id:"hunger",sev:2},
+    {t:now-8*DAY,id:"nausea",sev:1},{t:now-2*DAY,id:"skin",sev:1}],settings:{halfLife:6}};
+}
+function data(){return demo?demoData():state}
+
+/* ---------- Beräkningar ---------- */
+function levelAt(t,doses,hl){
+  const ke=Math.LN2/(hl*24), ka=Math.LN2/8; let s=0;
+  for(const d of doses){const h=(t-d.t)/HOUR; if(h<0)continue; s+=d.mg*ka/(ka-ke)*(Math.exp(-ke*h)-Math.exp(-ka*h));}
+  return s;
+}
+function sorted(a){return [...a].sort((x,y)=>x.t-y.t)}
+function info(){
+  const D=data(), ds=sorted(D.doses), now=Date.now();
+  if(!ds.length) return null;
+  const last=ds[ds.length-1], first=ds[0];
+  const day=Math.floor((now-last.t)/DAY);
+  const week=Math.floor((now-first.t)/(7*DAY))+1;
+  let incAt=null; for(let i=1;i<ds.length;i++) if(ds[i].mg>ds[i-1].mg) incAt=ds[i].t;
+  const sinceInc=incAt?Math.floor((now-incAt)/DAY):null;
+  const sameDoseSince=(()=>{let t=last.t;for(let i=ds.length-1;i>=0&&ds[i].mg===last.mg;i--)t=ds[i].t;return t})();
+  const weeksAtDose=Math.floor((now-sameDoseSince)/(7*DAY))+1;
+  const phase=day<=1?"rise":day<=4?"peak":"low";
+  return {ds,last,day,week,phase,sinceInc,weeksAtDose,level:levelAt(now,ds,D.settings.halfLife||6)};
+}
+function dayAfter(t,ds){let l=null;for(const d of ds){if(d.t<=t)l=d;}return l?Math.floor((t-l.t)/DAY):null}
+function patterns(){
+  const D=data(), ds=sorted(D.doses), m={};
+  for(const s of D.symptoms){const d=dayAfter(s.t,ds); if(d==null||d>7)continue; (m[s.id]=m[s.id]||Array(8).fill(0))[d]++;}
+  return Object.entries(m).map(([id,arr])=>{const tot=arr.reduce((a,b)=>a+b,0);const top=arr.indexOf(Math.max(...arr));return{id,arr,tot,top}}).sort((a,b)=>b.tot-a.tot);
+}
+function suggestSite(){
+  const ds=sorted(data().doses); const lastUse={}; SITES.forEach(s=>lastUse[s]=-1);
+  ds.forEach((d,i)=>{if(d.site)lastUse[d.site]=i}); return SITES.reduce((a,b)=>lastUse[b]<lastUse[a]?b:a);
+}
+
+/* ---------- Text för fasen ---------- */
+const PHASE={
+ rise:{title:"Nivån stiger",body:"Dosen tas upp från underhudsfettet och nivån i kroppen stiger mot sin topp. Det är nu aptiten oftast är som lägst och då illamående, värme, puls och sömnstörningar brukar märkas mest."},
+ peak:{title:"Nivån ligger högt",body:"Du är nära veckans högsta nivå och den sjunker långsamt. Magen arbetar långsammare, så förstoppning, torr mun och trötthet kan dyka upp nu, ofta för att du ätit och druckit mindre några dagar."},
+ low:{title:"Nivån sjunker mot nästa dos",body:"Ungefär hälften av förra dosen är kvar efter sex dagar. Hungern och suget kan komma tillbaka, särskilt på morgonen. Det är förväntat och betyder inte att det slutat fungera."}
+};
+function nowList(I){
+  const out=[], add=(id,why)=>{if(!out.find(o=>o.id===id))out.push({id,why})};
+  const pats=patterns();
+  pats.forEach(p=>{if(p.arr[Math.min(I.day,7)]>0)add(p.id,`Du har loggat det ${p.arr[Math.min(I.day,7)]} gång${p.arr[Math.min(I.day,7)]>1?"er":""} dag +${Math.min(I.day,7)} tidigare`)});
+  if(I.sinceInc!=null&&I.sinceInc<=28){add("nausea","Du höjde dosen för "+I.sinceInc+" dagar sedan");add("stomach","Vanligt veckorna efter dosökning")}
+  LIB.filter(x=>x.phase.includes(I.phase)).forEach(x=>add(x.id,"Vanligt i den här delen av veckan"));
+  if(I.weeksAtDose<=4) add("hunger","Nivån har inte byggts upp helt än (vecka "+I.weeksAtDose+" på samma dos)");
+  return out.slice(0,6);
+}
+
+/* ---------- Render ---------- */
+const ICONS={
+ idag:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>',
+ niva:'<svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M4 16c3-9 5-9 7-4s4 5 9-6"/></svg>',
+ logga:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+ bibliotek:'<svg viewBox="0 0 24 24"><path d="M4 4h5v16H4zM10 4h4v16h-4zM15 5l4-1 2 15-4 1z"/></svg>'
+};
+const TABS=[["idag","Idag"],["niva","Nivå"],["logga","Logga"],["bibliotek","Bibliotek"]];
+function renderTabs(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${ICONS[k]}<span>${l}</span></button>`).join("");
+}
+function demoBanner(){return demo?`<div class="banner"><b>Exempeldata.</b> Så här ser appen ut efter några veckor. Logga din första dos under Logga så byts exemplet mot dina egna uppgifter.</div>`:""}
+
+function vIdag(){
+  const I=info();
+  if(!I) return `<div class="panel"><h2>Välkommen</h2><p class="muted">Logga din första dos så räknar appen ut var du är i veckan och vad som är vanligt just nu.</p><button class="btn" data-tab="logga">Logga dos</button></div>`;
+  const ph=PHASE[I.phase], list=nowList(I), dd=Math.min(I.day,7);
+  const tip=(()=>{const pool=list.map(l=>byId(l.id)).filter(Boolean);const x=pool[new Date().getDate()%pool.length];return x?{x,t:x.tips[new Date().getDate()%x.tips.length]}:null})();
+  const todays=data().symptoms.filter(s=>new Date(s.t).toDateString()===new Date().toDateString()).map(s=>s.id);
+  return `${demoBanner()}
+  <header class="section"><span class="eyebrow">${new Date().toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"})}</span><h1>Dag ${I.day} efter dos</h1></header>
+  <div class="status"><div><span class="v">${num(I.level)}</span><span class="k">mg i kroppen (uppskattat)</span></div><div><span class="v">${num(I.last.mg,I.last.mg%1?1:0)}</span><span class="k">mg senaste dos</span></div><div><span class="v">${I.week}</span><span class="k">vecka totalt</span></div></div>
+  <div class="section" style="gap:6px"><span class="eyebrow">Dagar sedan senaste dos · mörkgrön = idag</span><div class="week" aria-label="Dagar sedan senaste dos">${Array.from({length:7},(_,i)=>`<span class="${i===dd?"on":i<dd?"past":""}">${i===0?"Dos":"+"+i}</span>`).join("")}</div></div>
+  <section class="panel"><span class="eyebrow">Vad händer i kroppen</span><h2>${ph.title}</h2><p>${ph.body}</p>${I.weeksAtDose<=4?`<p class="muted">Du är i vecka ${I.weeksAtDose} på ${num(I.last.mg,I.last.mg%1?1:0)} mg. Med en halveringstid runt 6 dagar byggs nivån upp under ungefär 4–5 veckor innan den blir stabil.</p>`:""}</section>
+  <section class="section"><div><span class="eyebrow">Vanliga symptom just nu</span><p class="muted" style="font-size:.88rem">Utifrån var du är i veckan, studiernas mönster och det du själv loggat.</p></div>
+   <div class="slist">${list.map(l=>{const x=byId(l.id);return x?`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${esc(l.why)}</small></span><span class="ev ${x.ev}">${x.ev==="study"?"Studier":"Rapporter"}</span><span class="chev">›</span></button>`:""}).join("")}</div></section>
+  ${tip?`<section class="panel"><span class="eyebrow">Dagens tips · ${tip.x.name}</span><p>${tip.t}</p></section>`:""}
+  <section class="section"><span class="eyebrow">Hur mår du idag? Tryck för att logga</span>
+   <div class="chips">${LIB.slice(0,14).map(x=>`<button class="chip ${todays.includes(x.id)?"on":""}" data-card="${x.id}">${x.name}</button>`).join("")}<button class="chip" data-tab="bibliotek">Fler…</button></div></section>
+  ${vPatterns()}
+  ${foot()}`;
+}
+function vPatterns(){
+  const p=patterns().filter(x=>x.tot>=2); if(!p.length) return "";
+  return `<section class="panel"><span class="eyebrow">Dina mönster</span><p class="muted" style="font-size:.88rem">Staplarna visar dag +0 till +7 efter dos.</p><div class="pattern">${p.slice(0,5).map(x=>{const mx=Math.max(...x.arr);return `<div class="prow"><span><b>${byId(x.id).name}</b><br><small class="muted">Oftast dag +${x.top} (${x.arr[x.top]} av ${x.tot} gånger)</small></span><span class="bars" aria-hidden="true">${x.arr.map(v=>`<span class="${v?"":"z"}" style="height:${v?Math.max(4,v/mx*26):2}px"></span>`).join("")}</span></div>`}).join("")}</div></section>`;
+}
+
+function vNiva(){
+  const D=data(), ds=sorted(D.doses), hl=D.settings.halfLife||6;
+  if(!ds.length) return `<div class="panel"><h2>Nivå i kroppen</h2><p class="muted">Kurvan ritas när du loggat din första dos.</p><button class="btn" data-tab="logga">Logga dos</button></div>`;
+  const now=Date.now(), t0=Math.max(ds[0].t-DAY, now-56*DAY), t1=now+14*DAY;
+  const last=ds[ds.length-1], proj=[...ds]; for(let t=last.t+7*DAY;t<=t1;t+=7*DAY) proj.push({t,mg:last.mg,p:1});
+  const N=180, pts=[]; let mx=0;
+  for(let i=0;i<=N;i++){const t=t0+(t1-t0)*i/N, v=levelAt(t,t<=now?ds:proj,hl); pts.push([t,v]); mx=Math.max(mx,v)}
+  const W=600,H=260,L=40,R=12,T=14,B=34, top=niceMax(mx);
+  const X=t=>L+(t-t0)/(t1-t0)*(W-L-R), Y=v=>T+(1-v/top)*(H-T-B);
+  const past=pts.filter(p=>p[0]<=now), fut=pts.filter(p=>p[0]>=now);
+  const path=a=>a.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("");
+  const area=past.length?path(past)+`L${X(past[past.length-1][0]).toFixed(1)},${Y(0)}L${X(past[0][0]).toFixed(1)},${Y(0)}Z`:"";
+  const ticks=[0,top/2,top];
+  const xt=[]; for(let t=Math.ceil(t0/(7*DAY))*7*DAY;t<t1;t+=7*DAY) xt.push(t);
+  const cur=levelAt(now,ds,hl);
+  const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Uppskattad mängd i kroppen över tid">
+   ${ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${num(v)}</text>`).join("")}
+   ${xt.map(t=>`<text x="${X(t)}" y="${H-10}" text-anchor="middle" font-size="11" fill="var(--muted)">${new Date(t).toLocaleDateString("sv-SE",{day:"numeric",month:"short"})}</text>`).join("")}
+   <path d="${area}" fill="var(--curve-fill)"/>
+   <path d="${path(past)}" fill="none" stroke="var(--curve)" stroke-width="2.4" stroke-linejoin="round"/>
+   <path d="${path(fut)}" fill="none" stroke="var(--curve)" stroke-width="2" stroke-dasharray="5 4" opacity=".75"/>
+   ${ds.filter(d=>d.t>=t0).map(d=>`<line x1="${X(d.t)}" x2="${X(d.t)}" y1="${Y(0)}" y2="${Y(0)+6}" stroke="var(--ink)" stroke-width="1.5"/>`).join("")}
+   <line x1="${X(now)}" x2="${X(now)}" y1="${T}" y2="${Y(0)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3"/>
+   <circle cx="${X(now)}" cy="${Y(cur)}" r="5" fill="var(--curve)" stroke="var(--surface)" stroke-width="2"/>
+   <text x="${Math.min(X(now)+8,W-R-60)}" y="${Math.max(Y(cur)-10,T+10)}" font-size="12" font-weight="600" fill="var(--ink)" font-family="var(--f-mono)">${num(cur)} mg</text>
+  </svg>`;
+  const ss=last.mg/(1-Math.pow(0.5,7/hl));
+  return `${demoBanner()}
+  <header class="section"><span class="eyebrow">Farmakokinetik</span><h1>Nivå i kroppen</h1></header>
+  <section class="panel"><div class="chart">${svg}</div>
+   <div class="legend"><span><i></i>Uppskattad mängd</span><span><i class="dash"></i>Om du fortsätter med ${num(last.mg,last.mg%1?1:0)} mg/vecka</span><span>▏ = loggad dos</span></div></section>
+  <section class="panel"><span class="eyebrow">Så läser du kurvan</span>
+   <p>Varje dos lägger sig ovanpå det som finns kvar från tidigare veckor. Därför stiger kurvan trappvis de första veckorna och planar sedan ut. Vid ${num(last.mg,last.mg%1?1:0)} mg i veckan landar toppen till slut runt <span class="mono">${num(ss)}</span> mg.</p>
+   <p class="muted">Förenklad modell. Halveringstiden kommer från Lillys fas 1-data (cirka 6 dagar). Hur snabbt dosen tas upp från huden är ett antagande, och verkliga nivåer varierar mellan personer. Använd kurvan för att förstå mönster, inte för att bestämma doser.</p>
+   <label for="hl">Halveringstid i modellen (dagar)<input id="hl" type="number" min="3" max="10" step="0.5" value="${hl}"></label></section>
+  ${foot()}`;
+}
+function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p}
+
+function vLogga(){
+  const D=data(), ds=sorted(D.doses).reverse(), sy=sorted(D.symptoms).reverse(), sug=suggestSite();
+  const nowLocal=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  const lastMg=ds[0]?.mg??"";
+  return `${demoBanner()}
+  <header class="section"><span class="eyebrow">Journal</span><h1>Logga</h1></header>
+  <section class="panel"><h2>Ny dos</h2>
+   <div class="grid2"><label for="dt">Datum och tid<input id="dt" type="datetime-local" value="${nowLocal}"></label>
+   <label for="mg">Dos (mg)<input id="mg" type="number" min="0" step="0.25" inputmode="decimal" value="${lastMg}" placeholder="t.ex. 2"></label></div>
+   <span class="eyebrow">Injektionsställe · förslag: ${sug}</span>
+   <div class="sites" id="sites">${SITES.map(s=>`<button class="site ${s===sug?"on tip":""}" data-site="${s}">${s}</button>`).join("")}</div>
+   <p class="muted" style="font-size:.85rem">Förslaget är det ställe du använt längst tid sedan. Doserna är dina egna, enligt ditt schema eller din förskrivare.</p>
+   <button class="btn" id="saveDose">Spara dos</button></section>
+  <section class="panel"><h2>Doser</h2>${ds.length?`<div class="hist">${ds.map(d=>`<div><span>${fmtD(d.t)} <span class="muted">${fmtT(d.t)}</span></span><span class="mono">${num(d.mg,d.mg%1?2:0)} mg</span><span class="muted">${d.site||""}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-deldose="${d.t}">×</button>`}</div>`).join("")}</div>`:`<p class="muted">Inga doser loggade än.</p>`}</section>
+  ${backupPanel()}
+  <section class="panel"><h2>Symptom</h2>${sy.length?`<div class="hist">${sy.map(s=>{const da=dayAfter(s.t,sorted(D.doses));return `<div><span><b>${byId(s.id)?.name||s.id}</b> <span class="muted">${fmtD(s.t)}${s.note?" · "+esc(s.note):""}</span></span><span class="mono muted">${da!=null?"+"+da:""}</span><span class="muted">${["","Lätt","Måttlig","Kraftig"][s.sev||1]}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-delsym="${s.t}|${s.id}">×</button>`}</div>`}).join("")}</div>`:`<p class="muted">Logga symptom från Idag eller Bibliotek.</p>`}</section>
+  ${foot()}`;
+}
+
+let q="";
+function vBibliotek(){
+  const f=LIB.filter(x=>!q||(x.name+" "+x.short).toLowerCase().includes(q.toLowerCase()));
+  return `<header class="section"><span class="eyebrow">${LIB.length} symptom</span><h1>Bibliotek</h1></header>
+  <input class="search" id="q" type="search" placeholder="Sök symptom, t.ex. hud, sömn, mage" value="${esc(q)}" aria-label="Sök symptom">
+  <div class="row"><span class="ev study">Visat i studier</span><span class="ev report">Rapporterat / trolig mekanism</span></div>
+  <div class="slist" id="libList">${libItems(f)}</div>
+  <section class="care"><h4>Sök vård direkt om</h4><ul>${ALARM.map(a=>`<li>${a}</li>`).join("")}</ul><p style="font-size:.9rem">Ring 1177 för råd. Ring 112 vid akut fara.</p></section>
+  <section class="panel"><span class="eyebrow">Källor</span><ol class="srcs" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px">${SRC.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join("")}</ol></section>
+  ${foot()}`;
+}
+function libItems(f){return f.map(x=>`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${x.short}</small></span><span class="ev ${x.ev}">${x.ev==="study"?"Studier":"Rapporter"}</span><span class="chev">›</span></button>`).join("")||`<p class="muted" style="padding:12px 0">Inget symptom matchar. Logga det ändå som anteckning under ett närliggande symptom.</p>`}
+
+function backupPanel(){
+  const lb=lastBackup(), old=!lb||Date.now()-lb>14*DAY;
+  return `<section class="panel"><h2>Backup</h2>
+   <p class="muted" style="font-size:.9rem">Allt sparas bara i den här webbläsaren. Spara en backupfil då och då, och använd den för att flytta dagboken till en ny telefon.</p>
+   ${!demo&&old?`<p class="banner">${lb?"Senaste backup "+fmtD(lb)+".":"Du har inte sparat någon backup än."}</p>`:""}
+   <div class="row"><button class="btn small" id="exp" ${demo?"disabled":""}>Spara backup</button><label class="btn ghost small" for="imp" style="flex-direction:row;color:var(--accent)">Läs in backup<input id="imp" type="file" accept="application/json,.json" hidden></label></div></section>`;
+}
+function foot(){return `<p class="foot">Personlig dagbok med information från publicerade studier och rapporter. Inte medicinsk rådgivning. Retatrutid är ett läkemedel under utveckling och är ännu inte godkänt. Ändra aldrig dos utan att prata med den som förskriver.</p>`}
+
+function render(){
+  renderTabs();
+  $("#app").innerHTML=({idag:vIdag,niva:vNiva,logga:vLogga,bibliotek:vBibliotek})[tab]();
+}
+
+/* ---------- Kort ---------- */
+let sev=1;
+function openCard(id){
+  const x=byId(id); if(!x) return; sev=1;
+  const pats=patterns().find(p=>p.id===id);
+  $("#layer").innerHTML=`<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ct">
+   <div class="row" style="justify-content:space-between"><span class="ev ${x.ev}">${EV[x.ev]}</span><button class="x" id="close" aria-label="Stäng">×</button></div>
+   <h2 id="ct">${x.name}</h2>
+   ${pats?`<p class="banner" style="background:var(--accent-soft)"><b style="color:var(--accent)">Ditt mönster:</b> loggat ${pats.tot} gång${pats.tot>1?"er":""}, oftast dag +${pats.top} efter dos.</p>`:""}
+   <div><h4>Vad forskningen säger</h4><p>${x.research}</p></div>
+   <div><h4>Varför det kan hända</h4><p>${x.why}</p></div>
+   ${x.when?`<div><h4>När det brukar märkas</h4><p>${x.when}</p></div>`:""}
+   <div><h4>Att testa</h4><ul>${x.tips.map(t=>`<li>${t}</li>`).join("")}</ul></div>
+   <div class="care"><h4>Hör av dig till vården om</h4><ul>${x.care.map(t=>`<li>${t}</li>`).join("")}</ul><p style="font-size:.88rem">1177 för råd, 112 vid akut fara.</p></div>
+   ${x.src.length?`<p class="srcs">Källor: ${x.src.map(i=>`<a href="${SRC[i][1]}" target="_blank" rel="noopener">${SRC[i][0]}</a>`).join(" · ")}</p>`:""}
+   ${demo?`<p class="muted" style="font-size:.88rem">Logga en dos först för att kunna spara symptom.</p>`:`<div class="panel" style="background:var(--bg)"><h4>Logga idag</h4>
+    <div class="sev" id="sev">${["Lätt","Måttlig","Kraftig"].map((s,i)=>`<button data-sev="${i+1}" class="${i===0?"on":""}">${s}</button>`).join("")}</div>
+    <label for="note">Anteckning (valfritt)<input id="note" type="text" maxlength="140" placeholder="t.ex. vaknade 03:30"></label>
+    <button class="btn" data-logsym="${x.id}">Logga ${x.name.toLowerCase()}</button></div>`}
+  </div></div>`;
+  $("#close").focus();
+}
+function closeCard(){$("#layer").innerHTML=""}
+function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+
+/* ---------- Lagring ---------- */
+function persist(){
+  try{ localStorage.setItem("reta-dagbok",JSON.stringify(state)); }
+  catch(e){ toast("Kunde inte spara i webbläsaren. Är privat läge påslaget?"); }
+}
+function boot(){
+  try{const raw=localStorage.getItem("reta-dagbok"); if(raw) state=Object.assign(state,JSON.parse(raw));}catch(e){}
+  demo=!state.doses.length; render();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="reta-dagbok-"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  try{localStorage.setItem("reta-dagbok-backup",String(Date.now()))}catch(e){}
+  toast("Backup sparad"); render();
+}
+function importData(file){
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result); if(!Array.isArray(d.doses)||!Array.isArray(d.symptoms)) throw 0;
+    state={doses:d.doses,symptoms:d.symptoms,settings:Object.assign({halfLife:6},d.settings||{})}; demo=!state.doses.length; persist(); toast("Backup inläst"); render();
+  }catch(e){toast("Filen kunde inte läsas. Välj en backupfil från Reta-dagboken.")}};
+  r.readAsText(file);
+}
+function lastBackup(){try{const v=localStorage.getItem("reta-dagbok-backup");return v?+v:null}catch(e){return null}}
+
+/* ---------- Händelser ---------- */
+let pickedSite=null;
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button,[data-tab],#bg"); if(!t) return;
+  if(t.id==="bg"&&e.target.id==="bg"){closeCard();return}
+  if(t.dataset.tab){tab=t.dataset.tab;closeCard();render();window.scrollTo(0,0);return}
+  if(t.dataset.card){openCard(t.dataset.card);return}
+  if(t.id==="close"){closeCard();return}
+  if(t.dataset.sev){sev=+t.dataset.sev;document.querySelectorAll("#sev button").forEach(b=>b.classList.toggle("on",b===t));return}
+  if(t.dataset.site){pickedSite=t.dataset.site;document.querySelectorAll(".site").forEach(b=>b.classList.toggle("on",b===t));return}
+  if(t.id==="exp"){exportData();return}
+  if(t.id==="saveDose"){
+    const dt=$("#dt").value, mg=parseFloat(($("#mg").value||"").replace(",","."));
+    if(!dt||!(mg>0)){toast("Fyll i datum och dos i mg.");return}
+    if(demo){state={doses:[],symptoms:[],settings:{halfLife:6}};demo=false}
+    state.doses.push({t:new Date(dt).getTime(),mg,site:pickedSite||suggestSite()}); pickedSite=null;
+    persist(); toast("Dos sparad"); tab="idag"; render(); window.scrollTo(0,0); return;
+  }
+  if(t.dataset.logsym){
+    state.symptoms.push({t:Date.now(),id:t.dataset.logsym,sev,note:($("#note")?.value||"").trim()||undefined});
+    persist(); closeCard(); toast("Loggat"); render(); return;
+  }
+  if(t.dataset.deldose){state.doses=state.doses.filter(d=>String(d.t)!==t.dataset.deldose);demo=!state.doses.length;persist();render();return}
+  if(t.dataset.delsym){const[ts,id]=t.dataset.delsym.split("|");state.symptoms=state.symptoms.filter(s=>!(String(s.t)===ts&&s.id===id));persist();render();return}
+});
+document.addEventListener("input",e=>{
+  if(e.target.id==="q"){q=e.target.value;$("#libList").innerHTML=libItems(LIB.filter(x=>!q||(x.name+" "+x.short).toLowerCase().includes(q.toLowerCase())))}
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="imp"&&e.target.files[0]){importData(e.target.files[0]);e.target.value="";return}
+  if(e.target.id==="hl"){const v=parseFloat(e.target.value);if(v>=3&&v<=10){state.settings.halfLife=v;if(!demo)persist();render()}}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCard()});
+boot();
+</script>
+</body>
+</html>
