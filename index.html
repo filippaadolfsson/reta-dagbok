@@ -557,6 +557,7 @@ function vLogga(){
    <div class="sites" id="sites">${SITES.map(s=>`<button class="site ${s===sug?"on tip":""}" data-site="${s}">${s}</button>`).join("")}</div>
    <p class="muted" style="font-size:.85rem">Förslaget är det ställe du använt längst tid sedan. Doserna är dina egna, enligt ditt schema eller din förskrivare.</p>
    <button class="btn" id="saveDose">Spara dos</button></section>
+  ${reminderPanel()}
   <section class="panel"><h2>Doser</h2>${ds.length?`<div class="hist">${ds.map(d=>`<div><span>${fmtD(d.t)} <span class="muted">${fmtT(d.t)}</span></span><span class="mono">${num(d.mg,d.mg%1?2:0)} mg</span><span class="muted">${d.site||""}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-deldose="${d.t}">×</button>`}</div>`).join("")}</div>`:`<p class="muted">Inga doser loggade än.</p>`}</section>
   ${backupPanel()}
   <section class="panel"><h2>Symptom</h2>${sy.length?`<div class="hist">${sy.map(s=>{const da=dayAfter(s.t,sorted(D.doses));return `<div><span><b>${byId(s.id)?.name||s.id}</b> <span class="muted">${fmtD(s.t)}${s.note?" · "+esc(s.note):""}</span></span><span class="mono muted">${da!=null?"+"+da:""}</span><span class="muted">${(byId(s.id)?.cat==="pos"?["","Lite","Tydligt","Mycket"]:["","Lätt","Måttlig","Kraftig"])[s.sev||1]}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-delsym="${s.t}|${s.id}">×</button>`}</div>`}).join("")}</div>`:`<p class="muted">Logga symptom från Idag eller Bibliotek.</p>`}</section>
@@ -580,6 +581,48 @@ function libItems(f){
     return `<h3 class="cathead">${l}</h3>`+g.map(x=>`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${x.short}</small></span><span class="ev ${x.ev}">${EVSHORT[x.ev]}</span><span class="chev">›</span></button>`).join("")}).join("");
 }
 
+const WD=[["MO","Måndag",1],["TU","Tisdag",2],["WE","Onsdag",3],["TH","Torsdag",4],["FR","Fredag",5],["SA","Lördag",6],["SU","Söndag",0]];
+function reminderDefaults(){
+  const r=state.settings.reminder; if(r) return r;
+  const last=sorted(state.doses).pop();
+  if(last){const d=new Date(last.t);return{day:d.getDay(),time:String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"),alarm:0,backup:true}}
+  return{day:0,time:"09:00",alarm:0,backup:true};
+}
+function reminderPanel(){
+  const r=reminderDefaults();
+  return `<section class="panel"><h2>Påminnelse</h2>
+   <p class="muted" style="font-size:.9rem">Lägger in en återkommande händelse i telefonens kalender. Den påminner dig även när appen är stängd.</p>
+   <div class="grid2"><label for="rday">Dosdag<select id="rday">${WD.map(w=>`<option value="${w[2]}" ${w[2]==r.day?"selected":""}>${w[1]}</option>`).join("")}</select></label>
+   <label for="rtime">Tid<input id="rtime" type="time" value="${r.time}"></label></div>
+   <label for="ralarm">Påminn mig<select id="ralarm">${[[0,"När det är dags"],[30,"30 minuter innan"],[60,"1 timme innan"],[720,"12 timmar innan"]].map(o=>`<option value="${o[0]}" ${o[0]==r.alarm?"selected":""}>${o[1]}</option>`).join("")}</select></label>
+   <label for="rbackup" style="flex-direction:row;align-items:center;gap:10px;color:var(--ink);font-weight:400"><input id="rbackup" type="checkbox" style="width:auto" ${r.backup?"checked":""}>Påminn också om backup varannan vecka</label>
+   <button class="btn" id="ical">Lägg till i kalendern</button>
+   <p class="muted" style="font-size:.82rem">Ändrar du dag eller tid senare: ta bort den gamla händelsen i kalendern och lägg till en ny här.</p></section>`;
+}
+function icsDate(d){const z=n=>String(n).padStart(2,"0");return d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+"T"+z(d.getHours())+z(d.getMinutes())+"00"}
+function icsUtc(d){return d.toISOString().replace(/[-:]/g,"").slice(0,15)+"Z"}
+function makeICS(r){
+  const [h,m]=r.time.split(":").map(Number), now=new Date(), start=new Date(now);
+  start.setHours(h,m,0,0); let add=(r.day-start.getDay()+7)%7; if(add===0&&start<=now) add=7; start.setDate(start.getDate()+add);
+  const code=WD.find(w=>w[2]==r.day)[0], url=location.origin+location.pathname, stamp=icsUtc(new Date());
+  const esc=x=>x.replace(/\\/g,"\\\\").replace(/[,;]/g,c=>"\\"+c);
+  const ev=(uid,dt,rule,title,desc,alarm)=>["BEGIN:VEVENT","UID:"+uid+"@reta-dagboken","DTSTAMP:"+stamp,"DTSTART:"+icsDate(dt),"DURATION:PT15M","RRULE:"+rule,"SUMMARY:"+esc(title),"DESCRIPTION:"+esc(desc),"URL:"+url,
+    "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+title,"TRIGGER:"+(alarm?"-PT"+alarm+"M":"PT0S"),"END:VALARM","END:VEVENT"];
+  let L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Reta-dagboken//SV","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+  L=L.concat(ev("dos-"+Date.now(),start,"FREQ=WEEKLY;BYDAY="+code,"Reta-dos","Dags för veckans dos. Logga den i Reta-dagboken: "+url,+r.alarm));
+  if(r.backup){const b=new Date(start);b.setHours(19,0,0,0);L=L.concat(ev("backup-"+Date.now(),b,"FREQ=WEEKLY;INTERVAL=2;BYDAY="+code,"Reta-dagboken: spara backup","Öppna Reta-dagboken, gå till Logga och tryck Spara backup.",0))}
+  L.push("END:VCALENDAR"); return L.join("\r\n")+"\r\n";
+}
+function addToCalendar(){
+  const r={day:+$("#rday").value,time:$("#rtime").value||"09:00",alarm:+$("#ralarm").value,backup:$("#rbackup").checked};
+  state.settings.reminder=r; if(!demo) persist();
+  const ics=makeICS(r), ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  if(ios){ location.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
+  a.download="reta-paminnelse.ics"; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  toast("Öppna filen för att lägga in den i kalendern");
+}
 function backupPanel(){
   const lb=lastBackup(), old=!lb||Date.now()-lb>14*DAY;
   return `<section class="panel"><h2>Backup</h2>
@@ -656,6 +699,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.sev){sev=+t.dataset.sev;document.querySelectorAll("#sev button").forEach(b=>b.classList.toggle("on",b===t));return}
   if(t.dataset.site){pickedSite=t.dataset.site;document.querySelectorAll(".site").forEach(b=>b.classList.toggle("on",b===t));return}
   if(t.id==="exp"){exportData();return}
+  if(t.id==="ical"){addToCalendar();return}
   if(t.id==="saveDose"){
     const dt=$("#dt").value, mg=parseFloat(($("#mg").value||"").replace(",","."));
     if(!dt||!(mg>0)){toast("Fyll i datum och dos i mg.");return}
