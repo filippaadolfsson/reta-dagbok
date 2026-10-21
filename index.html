@@ -140,6 +140,17 @@ html,body{overflow-x:hidden}
 .okbtn.on{background:var(--accent);color:var(--surface)}
 .spark{flex:none}
 .tabs button span{line-height:1.15;text-align:center}
+.fact p{margin:0}
+.horm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hbtn{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 10px;min-width:0}
+.hbtn b{font-family:var(--f-display);font-size:1.05rem;color:var(--accent)}
+.hbtn span{font-size:.8rem;color:var(--muted);line-height:1.3}
+.cmp{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.cr{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:4px;padding:9px 10px;font-size:.86rem;align-items:center;border-top:1px solid var(--line)}
+.cr span:not(:first-child){text-align:center}
+.cr.ch{border-top:0;font-size:.68rem;font-weight:700;letter-spacing:.02em;color:var(--muted);overflow-wrap:anywhere}
+.cr.me{background:var(--accent-soft);font-weight:700}
+.cr .y{color:var(--accent);font-size:1rem}.cr .n{color:var(--muted)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:.9rem;z-index:50}
 /* Diagram */
 .chart{width:100%;overflow-x:auto}
@@ -521,6 +532,7 @@ function vIdag(){
   <div class="status"><div><span class="v">${num(I.level)}</span><span class="k">mg i kroppen (uppskattat)</span></div><div><span class="v">${num(I.last.mg,I.last.mg%1?1:0)}</span><span class="k">mg senaste dos</span></div><div><span class="v">${I.week}</span><span class="k">vecka totalt</span></div></div>
   <div class="section" style="gap:6px"><span class="eyebrow">Dagar sedan senaste dos · mörkgrön = idag</span><div class="week" aria-label="Dagar sedan senaste dos">${Array.from({length:7},(_,i)=>`<span class="${i===dd?"on":i<dd?"past":""}">${i===0?"Dos":"+"+i}</span>`).join("")}</div></div>
   <section class="panel"><span class="eyebrow">Vad händer i kroppen</span><h2>${ph.title}</h2><p>${ph.body}</p>${I.weeksAtDose<=4?`<p class="muted">Du är i vecka ${I.weeksAtDose} på ${num(I.last.mg,I.last.mg%1?1:0)} mg. Med en halveringstid runt 6 dagar byggs nivån upp under ungefär 4–5 veckor innan den blir stabil.</p>`:""}</section>
+  ${factPanel(I)}
   ${(()=>{const g=proteinGoal(data()),p=proteinOn(data(),dk()),st=stepsOn(data(),dk());return `<button class="panel todayk" data-tab="kost"><span class="eyebrow">Kost idag ›</span><span class="row"><span><b class="mono">${Math.round(p)}${g?" / "+g:""} g</b> protein</span><span><b class="mono">${st!=null?st.toLocaleString("sv-SE"):"–"}</b> steg</span></span></button>`})()}
   <section class="section"><div><span class="eyebrow">Vanliga symptom just nu</span><p class="muted" style="font-size:.88rem">Utifrån var du är i veckan, studiernas mönster och det du själv loggat.</p></div>
    <div class="slist">${list.map(l=>{const x=byId(l.id);return x?`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${esc(l.why)}</small></span><span class="ev ${x.ev}">${EVSHORT[x.ev]}</span><span class="chev">›</span></button>`:""}).join("")}</div></section>
@@ -599,6 +611,7 @@ let q="";
 function vBibliotek(){
   const f=LIB.filter(x=>!q||(x.name+" "+x.short).toLowerCase().includes(q.toLowerCase()));
   return `<header class="section"><span class="eyebrow">${LIB.length} symptom och effekter</span><h1>Bibliotek</h1></header>
+  ${hormoneSection()}
   <input class="search" id="q" type="search" placeholder="Sök symptom, t.ex. hud, sömn, mage" value="${esc(q)}" aria-label="Sök symptom">
   <div class="row"><span class="ev study">Visat i studier</span><span class="ev report">Rapporterat / trolig mekanism</span><span class="ev user">Användare berättar</span></div>
   <div class="slist" id="libList">${libItems(f)}</div>
@@ -836,6 +849,73 @@ function openEx(id){
    ${H.length?`<div class="hist">${[...H].reverse().slice(0,10).map(h=>`<div><span>${fmtD(h.t)}</span><span class="mono">${fmtVal(e,h)}</span></div>`).join("")}</div>`:`<p class="muted">Inte loggad än. Starta ett pass för att börja.</p>`}`);
 }
 function vKost(){return vKostInner()}
+/* ---------- Dagens fakta och hormoner ---------- */
+const FACTS=[
+ {w:I=>I.phase==="rise",x:()=>"Idag och imorgon stiger nivån i kroppen. Aptiten är ofta som lägst nu, så planera in proteinrika mål även om du inte är hungrig.",c:"appetite"},
+ {w:I=>I.phase==="peak",x:()=>"Mitt i veckan ligger nivån högt och magen töms långsamt. Små portioner och mycket vätska brukar hjälpa mot förstoppning och svavelrapningar.",c:"constipation"},
+ {w:I=>I.phase==="low",x:()=>"Nu närmar du dig nästa dos och nivån är som lägst. Hunger och sug är förväntat och betyder inte att det slutat fungera.",c:"hunger"},
+ {w:I=>I.weeksAtDose<=2,x:I=>`Du är i vecka ${I.weeksAtDose} på den här dosen. Biverkningar är vanligast de första veckorna efter en dosökning och brukar avta med tiden.`,c:"nausea",s:7},
+ {w:I=>I.weeksAtDose>=4&&I.weeksAtDose<=5,x:I=>`Du har tagit samma dos i ${I.weeksAtDose} veckor. Nu är nivån i kroppen nära stabil, så veckorna brukar kännas jämnare.`,s:0},
+ {x:()=>"Retatrutid påverkar tre hormonreceptorer samtidigt: GLP-1, GIP och glukagon. Ozempic påverkar en av dem och Mounjaro två.",h:"glukagon",s:16},
+ {x:()=>"Halveringstiden är ungefär 6 dagar. Ungefär hälften av en dos finns kvar när det är dags för nästa, så varje vecka bygger på den förra.",s:0},
+ {x:()=>"På samma dos tar det ungefär 4–5 veckor innan nivån i kroppen blir stabil. Därför kan de första veckorna kännas olika från vecka till vecka.",s:0},
+ {x:()=>"I TRIUMPH-1 följdes 2 339 personer i 80 veckor. I snitt gick de ner 17,6 % (4 mg), 23,7 % (9 mg) och 25 % (12 mg) av sin vikt, mot 3,9 % på placebo.",s:18},
+ {x:()=>"I TRIUMPH-1 gick kvinnor ner mer än män, upp till 30,8 % mot 23,2 % efter 80 veckor. Samma skillnad syntes i fas 2-studien.",s:3},
+ {x:()=>"I studierna höjdes dosen stegvis, och en lägre startdos gav färre magbesvär. Kroppen behöver tid att vänja sig vid varje steg.",s:7},
+ {x:()=>"Glukagondelen får kroppen att göra av med mer energi i vila. Det förklarar en del av viktnedgången, och varför en del känner sig varma.",h:"glukagon",s:16},
+ {x:()=>"Vilopulsen steg mest runt vecka 24 i fas 2-studien och sjönk sedan igen. Följ gärna din vilopuls i klockan.",h:"glukagon",c:"pulse",s:6},
+ {x:()=>"Retatrutid är ungefär 9 gånger starkare än kroppens eget GIP vid GIP-receptorn, men något svagare än kroppens eget GLP-1 och glukagon vid deras receptorer.",h:"gip",s:0},
+ {x:()=>"I en delstudie av TRIUMPH-1 med personer som har sömnapné minskade andningsuppehållen med 23–34 per timme, mot 10 på placebo.",c:"snore",s:18},
+ {x:()=>"Knäsmärta vid artros minskade tydligt mer med retatrutid än med placebo i TRIUMPH-1.",c:"joints",s:18},
+ {x:()=>"Fas 2-studierna visade kraftigt minskat leverfett. Glukagon ökar fettförbränningen direkt i levern.",h:"glukagon",c:"liver",s:16},
+ {x:()=>"Pirrande eller öm hud, dysestesi, är vanligare med retatrutid än med andra GLP-1-läkemedel. I TRIUMPH-1 gick det oftast över medan man fortsatte behandlingen.",c:"skin",s:1},
+ {x:()=>"GLP-1-läkemedel kan dämpa törsten. Drick efter schema istället för efter törst, särskilt dagarna efter dosen.",c:"drymouth",s:12},
+ {x:()=>"Urinvägsinfektioner var något vanligare med retatrutid i TRIUMPH-1, 7,5–8,8 % mot 5,3 % på placebo. Att dricka ordentligt hjälper.",c:"uti",s:2},
+ {x:()=>"Retatrutid utvecklas av Eli Lilly och hade kodnamnet LY3437943 under utvecklingen.",s:0},
+ {x:()=>"Efter TRIUMPH-2 och TRIUMPH-3 sa Lilly att underlaget räcker för att söka godkännande runt om i världen. Läkemedlet är ännu inte godkänt.",s:4},
+ {x:()=>"Protein hjälper dig att behålla musklerna när vikten går ner snabbt. Sikta på protein vid varje måltid, även när aptiten är låg.",c:"muscle"},
+ {x:()=>"GLP-1 är ett hormon som tarmen bildar efter varje måltid. Kroppens eget GLP-1 bryts ner på några minuter, medan retatrutid finns kvar i dagar.",h:"glp1"}
+];
+let factOffset=0;
+function factList(I){const day=Math.floor(Date.now()/DAY),sp=FACTS.filter(f=>f.w&&f.w(I)),gen=FACTS.filter(f=>!f.w);const rot=(a,n)=>a.length?a.slice(n%a.length).concat(a.slice(0,n%a.length)):a;return rot(sp,day).concat(rot(gen,day))}
+function factPanel(I){const L=factList(I);if(!L.length)return "";const f=L[factOffset%L.length];
+  return `<section class="panel fact"><div class="row" style="justify-content:space-between"><span class="eyebrow">Dagens fakta</span><span class="muted mono" style="font-size:.8rem">${factOffset%L.length+1}/${L.length}</span></div>
+   <p>${f.x(I)}</p>
+   <div class="row">${f.h?`<button class="btn ghost small" data-hormone="${f.h}">Så fungerar ${HORMONES[f.h].short}</button>`:""}${f.c&&byId(f.c)?`<button class="btn ghost small" data-card="${f.c}">${byId(f.c).name}</button>`:""}<button class="btn small" data-nextfact="1">Nästa fakta</button></div>
+   ${f.s!=null&&SRC[f.s]?`<p class="srcs">Källa: <a href="${SRC[f.s][1]}" target="_blank" rel="noopener">${SRC[f.s][0]}</a></p>`:""}</section>`}
+const HORMONES={
+ glp1:{name:"GLP-1",short:"GLP-1",tag:"Mättnad och magen",
+  natural:"Ett hormon som tarmen bildar när du äter. Det säger till hjärnan att du är mätt och hjälper kroppen att hantera blodsockret efter maten. Kroppens eget GLP-1 bryts ner på några minuter.",
+  does:["Ger mättnad och mindre matbrus via hjärnan","Gör att magsäcken töms långsammare, så maten stannar längre","Ökar insulinet när blodsockret är högt, men inte när det är lågt"],
+  feel:"Det är GLP-1-delen som ligger bakom de flesta magbesvären, och den gör att aptiten försvinner.",
+  cards:["noise","appetite","nausea","constipation","stomach","reflux","sulfur","drymouth"],src:[16,15]},
+ gip:{name:"GIP",short:"GIP",tag:"Insulin och fettvävnad",
+  natural:"Också ett hormon från tarmen som frisätts när du äter. Det förstärker insulinsvaret och påverkar hur fettvävnaden lagrar energi.",
+  does:["Förstärker effekten på blodsockret tillsammans med GLP-1","Påverkar fettvävnaden och bidrar till viktnedgången","Kan dämpa en del av illamåendet från GLP-1, enligt forskarnas teorier"],
+  feel:"Retatrutid är ungefär 9 gånger starkare än kroppens eget GIP vid GIP-receptorn. Samma mekanism finns i Mounjaro.",
+  cards:["liver","noise","hypo"],src:[0,16]},
+ glukagon:{name:"Glukagon",short:"glukagon",tag:"Energi och värme",
+  natural:"Ett hormon från bukspottkörteln som normalt höjer blodsockret när du inte ätit på ett tag. Det får levern att frigöra energi.",
+  does:["Ökar energiförbrukningen i vila, så kroppen går på högre varv","Ökar fettförbränningen i levern och minskar leverfettet","Höjer ofta vilopulsen något"],
+  feel:"Det här är den del som är unik för retatrutid och som varken Ozempic eller Mounjaro har. Den förklarar troligen värmekänslan, den högre pulsen och en del av energipåslaget och sömnproblemen.",
+  cards:["heat","pulse","energy","sleep","liver"],src:[16,9,0]}
+};
+function hormoneSection(){
+  return `<section class="section"><span class="eyebrow">Så fungerar retatrutid</span>
+   <p class="muted" style="font-size:.9rem">Retatrutid härmar tre av kroppens egna hormoner. Tryck på ett för att se vad det gör och vilka symptom det kan förklara.</p>
+   <div class="horm">${Object.entries(HORMONES).map(([k,h])=>`<button class="hbtn" data-hormone="${k}"><b>${h.name}</b><span>${h.tag}</span></button>`).join("")}</div>
+   <div class="cmp" role="table" aria-label="Jämförelse mellan läkemedel">
+    <div class="cr ch" role="row"><span role="columnheader"></span><span role="columnheader">GLP-1</span><span role="columnheader">GIP</span><span role="columnheader">Glukagon</span></div>
+    ${[["Ozempic, Wegovy",1,0,0],["Mounjaro, Zepbound",1,1,0],["Retatrutid",1,1,1]].map(r=>`<div class="cr ${r[0]==="Retatrutid"?"me":""}" role="row"><span role="cell">${r[0]}</span>${r.slice(1).map(v=>`<span role="cell" class="${v?"y":"n"}" aria-label="${v?"Ja":"Nej"}">${v?"●":"–"}</span>`).join("")}</div>`).join("")}
+   </div></section>`;
+}
+function openHormone(k){const h=HORMONES[k];if(!h)return;
+  sheet(`${sheetHead(h.name)}<span class="eyebrow">${h.tag}</span>
+   <div><h4>Vad hormonet gör i kroppen</h4><p>${h.natural}</p></div>
+   <div><h4>Vad retatrutid gör via ${h.short}</h4><ul>${h.does.map(d=>`<li>${d}</li>`).join("")}</ul></div>
+   <p class="banner" style="background:var(--accent-soft)">${h.feel}</p>
+   <div><h4>Symptom och effekter som hör ihop</h4><div class="chips" style="margin-top:8px">${h.cards.filter(byId).map(c=>`<button class="chip" data-card="${c}">${byId(c).name}</button>`).join("")}</div></div>
+   <p class="srcs">Källor: ${h.src.map(i=>`<a href="${SRC[i][1]}" target="_blank" rel="noopener">${SRC[i][0]}</a>`).join(" · ")}</p>`)}
 function vKostInner(){
   const D=data(), today=dk(), goal=proteinGoal(D), p=proteinOn(D,today), pct=goal?Math.min(100,p/goal*100):0, s=D.settings||{};
   const days=lastDays(7), lab=days.map(k=>new Date(k+"T12:00").toLocaleDateString("sv-SE",{weekday:"short"}).replace(".",""));
@@ -978,6 +1058,8 @@ document.addEventListener("click",e=>{
   if(t.id==="cancelpass"){if(t.dataset.sure){state.workoutDraft=null;persist();render();return}t.dataset.sure="1";t.textContent="Tryck igen för att slänga passet";setTimeout(()=>{if(t.isConnected){delete t.dataset.sure;t.textContent="Slänga passet"}},3000);return}
   if(t.dataset.delpass){if(t.dataset.sure){state.workouts=state.workouts.filter(w=>String(w.t)!==t.dataset.delpass);demo=isEmpty();persist();render();return}t.dataset.sure="1";t.textContent="Ta bort?";setTimeout(()=>{if(t.isConnected){delete t.dataset.sure;t.textContent="×"}},3000);return}
   if(t.dataset.exinfo){openEx(t.dataset.exinfo);return}
+  if(t.dataset.hormone){openHormone(t.dataset.hormone);return}
+  if(t.dataset.nextfact){factOffset++;render();return}
   if(t.id==="saveDose"){
     const dt=$("#dt").value, mg=parseFloat(($("#mg").value||"").replace(",","."));
     if(!dt||!(mg>0)){toast("Fyll i datum och dos i mg.");return}
