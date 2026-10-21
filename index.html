@@ -799,7 +799,7 @@ function vTrana(){
    <div class="big"><span class="mono">${Math.min(n,9)}</span><span class="muted">/ 3 pass</span></div>
    <div class="dots" aria-hidden="true">${[0,1,2].map(i=>`<span class="${i<n?"on":""}"></span>`).join("")}</div>
    <p class="muted" style="font-size:.9rem">${n>=3?"Veckans mål är klart.":`${3-n} pass kvar den här veckan.`}${sk?` ${sk} ${sk===1?"vecka":"veckor"} i rad med 3 pass.`:""}</p>
-   ${dr?"":`<button class="btn" id="startpass">Starta dagens pass</button>`}
+   ${dr?"":`<button class="btn" id="startpass">Starta dagens pass</button><button class="btn ghost small" id="startpast">Logga ett pass i efterhand</button>`}
   </section>
   ${dr?passPanel(D,dr):""}
   <section class="section"><span class="eyebrow">Utveckling per övning</span><div class="slist">${EX.map(e=>{const l=lastFor(D,e.id);return `<button class="sitem" data-exinfo="${e.id}"><span class="t"><b>${e.name}</b><small>${l?fmtVal(e,l)+" · "+fmtD(l.t):"Inte loggad än · mål "+e.sets+" × "+e.reps}</small></span>${spark(D,e)}<span class="chev">›</span></button>`}).join("")}</div></section>
@@ -809,6 +809,7 @@ function vTrana(){
 function passPanel(D,dr){
   const done=EX.filter(e=>(dr.items[e.id]||{}).done).length+(dr.stairDone?1:0);
   return `<section class="panel"><div class="row" style="justify-content:space-between"><h2>Dagens pass</h2><span class="muted mono">${done}/${EX.length+1}</span></div>
+  <label for="pdate">Datum för passet<input id="pdate" type="date" value="${dr.date||dk()}" max="${dk()}"></label>
   <p class="muted" style="font-size:.88rem">Förra gångens siffror är ifyllda. Ändra om det behövs och tryck Klar. Vila 60–90 sek mellan seten.</p>
   <div class="exlist">${EX.map((e,i)=>{const it=dr.items[e.id]||{},l=lastFor(D,e.id),reps=it.reps!=null&&it.reps!==""?it.reps:(l?l.reps:""),kg=it.kg!=null&&it.kg!==""?it.kg:(l&&l.kg!=null?l.kg:"");
    return `<div class="ex ${it.done?"done":""}"><div class="exh"><b>${i+1}. ${e.name}</b><a href="${vid(e)}" target="_blank" rel="noopener">Video</a></div>
@@ -966,14 +967,14 @@ document.addEventListener("click",e=>{
   if(t.dataset.myfood!=null){const f=(state.settings.myFoods||[])[+t.dataset.myfood];if(f){addProtein(f.g,f.name);toast("+"+f.g+" g protein")}return}
   if(t.dataset.delfav!=null){state.settings.myFoods.splice(+t.dataset.delfav,1);persist();render();return}
   if(t.dataset.sub){sub=t.dataset.sub;render();return}
-  if(t.id==="startpass"){ensureReal();state.workoutDraft={t:Date.now(),items:{},stair:20,stairDone:false};persist();render();return}
+  if(t.id==="startpass"||t.id==="startpast"){ensureReal();const past=t.id==="startpast";state.workoutDraft={t:Date.now(),items:{},stair:20,stairDone:false,date:past?dk(Date.now()-DAY):dk()};persist();render();if(past){const d=$("#pdate");if(d){d.scrollIntoView({block:"center"});d.focus()}toast("Välj vilken dag passet var")}return}
   if(t.dataset.exdone){const id=t.dataset.exdone,dr=state.workoutDraft;if(!dr)return;const it=dr.items[id]=dr.items[id]||{};
     if(!it.done){const r=parseFloat(($("#r-"+id)||{}).value),k=$("#k-"+id)?parseFloat(($("#k-"+id).value||"").replace(",",".")):NaN;if(!(r>0)){toast(EX.find(e=>e.id===id).time?"Skriv antal sekunder först.":"Skriv antal reps först.");return}it.reps=r;it.kg=isNaN(k)?0:k}
     it.done=!it.done;persist();render();return}
   if(t.dataset.stairdone){const dr=state.workoutDraft;if(!dr)return;const m=parseFloat(($("#stair")||{}).value);dr.stair=m>0?m:20;dr.stairDone=!dr.stairDone;persist();render();return}
   if(t.id==="endpass"){const dr=state.workoutDraft;if(!dr)return;const items=EX.filter(e=>(dr.items[e.id]||{}).done).map(e=>{const it=dr.items[e.id];return e.time?{id:e.id,reps:it.reps}:{id:e.id,reps:it.reps,kg:it.kg||0}});
     if(!items.length&&!dr.stairDone){toast("Markera minst en övning som klar först.");return}
-    state.workouts.push({t:Date.now(),items,stair:dr.stairDone?dr.stair:0});state.workoutDraft=null;persist();toast("Passet sparat");render();window.scrollTo(0,0);return}
+    const dd=($("#pdate")||{}).value||dr.date||dk();if(dd>dk()){toast("Datumet kan inte vara i framtiden.");return}state.workouts.push({t:dd===dk()?Date.now():new Date(dd+"T18:00").getTime(),items,stair:dr.stairDone?dr.stair:0});state.workoutDraft=null;persist();toast(dd===dk()?"Passet sparat":"Passet sparat för "+fmtD(new Date(dd+"T18:00").getTime()));render();window.scrollTo(0,0);return}
   if(t.id==="cancelpass"){if(t.dataset.sure){state.workoutDraft=null;persist();render();return}t.dataset.sure="1";t.textContent="Tryck igen för att slänga passet";setTimeout(()=>{if(t.isConnected){delete t.dataset.sure;t.textContent="Slänga passet"}},3000);return}
   if(t.dataset.delpass){if(t.dataset.sure){state.workouts=state.workouts.filter(w=>String(w.t)!==t.dataset.delpass);demo=isEmpty();persist();render();return}t.dataset.sure="1";t.textContent="Ta bort?";setTimeout(()=>{if(t.isConnected){delete t.dataset.sure;t.textContent="×"}},3000);return}
   if(t.dataset.exinfo){openEx(t.dataset.exinfo);return}
@@ -1001,6 +1002,7 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
   if(e.target.id==="snap"&&e.target.files[0]){decodeFile(e.target.files[0]);e.target.value="";return}
   if(e.target.id==="imp"&&e.target.files[0]){importData(e.target.files[0]);e.target.value="";return}
+  if(e.target.id==="pdate"&&state.workoutDraft){state.workoutDraft.date=e.target.value;persist();return}
   if(e.target.id==="hl"){const v=parseFloat(e.target.value);if(v>=3&&v<=10){state.settings.halfLife=v;if(!demo)persist();render()}}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCard()});
