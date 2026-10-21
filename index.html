@@ -74,6 +74,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .ev{font-size:.7rem;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:99px;white-space:nowrap}
 .ev.study{background:var(--ok-soft);color:var(--ok)}
 .ev.report{background:var(--warn-soft);color:var(--warn)}
+.ev.user{background:var(--sunk);color:var(--muted)}
+.cathead{font-size:.95rem;padding:18px 2px 6px;border-bottom:1px solid var(--line);color:var(--accent)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 13px;font-size:.92rem}
 .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
@@ -150,118 +152,248 @@ const SRC=[
  ["Oviva: Retatrutid-biverkningar","https://oviva.com/uk/en/retatrutide-side-effects/"],
  ["The Rx Index: Biverkningar per dos i fas 3","https://therxindex.com/guides/retatrutide-side-effects/"],
  ["Superpower: Så fungerar glukagondelen","https://superpower.com/guides/retatrutide"],
- ["2 Minute Medicine: Fas 2-studien","https://2minutemedicine.com/retatrutide-effectively-reduces-body-weight-in-patients-with-obesity"]
+ ["2 Minute Medicine: Fas 2-studien","https://2minutemedicine.com/retatrutide-effectively-reduces-body-weight-in-patients-with-obesity"],
+ ["NEJM 2026: TRIUMPH-1 (via HCPLive)","https://www.hcplive.com/view/retatrutide-improves-weight-loss-knee-osteoarthritis-pain-sleep-apnea-versus-placebo"],
+ ["Bolt Pharmacy: Interaktioner med retatrutid","https://www.boltpharmacy.co.uk/guide/what-not-to-take-with-retatrutide"],
+ ["Peptide Dossier: Ovanligare biverkningar","https://peptidedossier.com/guides/retatrutide-side-effects/"],
+ ["Medino: Svavelrapningar på GLP-1","https://www.medino.com/article/sulphur-burps-on-wegovy"],
+ ["Lilly: TRIUMPH-1 och TRANSCEND-T2D-1","https://lilly.gcs-web.com/node/54396"]
 ];
-const EV={study:"Visat i studier",report:"Rapporterat / trolig mekanism"};
+const EV={study:"Visat i studier",report:"Rapporterat / trolig mekanism",user:"Användare berättar"};
+const EVSHORT={study:"Studier",report:"Rapporter",user:"Erfarenheter"};
+const CATS=[["mage","Mage och matsmältning"],["kropp","Kropp, hud och muskler"],["hjarta","Hjärta och blodtryck"],["somn","Sömn, energi och humör"],["mat","Aptit, smak och vätska"],["ovrigt","Hormoner, urinvägar och blodsocker"],["pos","Positiva effekter"]];
 /* phase: när i veckan det brukar märkas. rise=dag 0–1, peak=dag 2–4, low=dag 5+ ; esc=vid dosökning/uppstart */
 const LIB=[
-{id:"sleep",name:"Svårt att sova",ev:"report",phase:["rise"],short:"Insomning, tidiga uppvaknanden, orolig sömn",
+{id:"sleep",cat:"somn",name:"Svårt att sova",ev:"report",phase:["rise"],short:"Insomning, tidiga uppvaknanden, orolig sömn",
  research:"Sömnproblem har rapporterats av en del deltagare i studierna, men ett säkert orsakssamband är inte fastställt. Bland användare utanför studierna är sömnlöshet däremot en av de vanligaste rapporterna, tillsammans med trötthet, ökad energi och förhöjd puls.",
  why:"Flera saker kan spela in: glukagondelen höjer energiförbrukning och vilopuls, illamående och magbesvär kan störa natten, och kroppen får mindre energi än vanligt.",
  when:"Oftast dagarna närmast dosen och under upptrappningen. Biverkningar är generellt vanligast i början och efter dosökning.",
  tips:["Testa att ta dosen på morgonen istället för kvällen och se om mönstret ändras.","Ingen koffein efter lunch, särskilt dag 0–2.","Ät ett proteinrikt mellanmål på kvällen om du gått till sängs hungrig.","Svalt sovrum. Värmekänsla och sömnproblem hänger ofta ihop."],
  care:["Sömnproblemen håller i sig i flera veckor","Du får hjärtklappning, ihållande hög puls eller ångest på natten"],src:[10,8]},
-{id:"skin",name:"Känslig hud",ev:"study",phase:["peak","esc"],short:"Brännande, stickande eller öm hud vid beröring (dysestesi)",
+{id:"skin",cat:"kropp",name:"Känslig hud",ev:"study",phase:["peak","esc"],short:"Brännande, stickande eller öm hud vid beröring (dysestesi)",
  research:"Dysestesi är en ny biverkning som är mer typisk för retatrutid än för andra GLP-1-läkemedel. I TRIUMPH-1 hade 5,1 % (4 mg), 12,3 % (9 mg) och 12,5 % (12 mg) det, mot 0,9 % på placebo. Det var oftast milt till måttligt och gick för de flesta över under pågående behandling. Huden ser oftast helt normal ut.",
  why:"Orsaken är inte klarlagd. Det verkar handla om nervernas känsel snarare än om huden i sig, och det blir vanligare vid högre doser.",
  when:"Vanligare vid högre doser och i perioder efter dosökning, men kan dyka upp tidigare.",
  tips:["Mjuka, sömlösa plagg och ljummet istället för varmt vatten.","Notera var på kroppen det sitter och hur länge. Det är värdefullt för läkaren.","Logga det här med styrka, så ser du om det följer dosdagarna."],
  care:["Du får synliga utslag, blåsor eller svullnad","Domningar, svaghet eller känselbortfall","Det sprider sig eller stör sömn och vardag mer än några veckor"],src:[2,1,5]},
-{id:"heat",name:"Värmekänsla och vallningar",ev:"report",phase:["rise","peak"],short:"Varm i kroppen, svettas, rodnar",
+{id:"heat",cat:"kropp",name:"Värmekänsla och vallningar",ev:"report",phase:["rise","peak"],short:"Varm i kroppen, svettas, rodnar",
  research:"Värmekänsla är inte en tydligt redovisad biverkning i studierna. Mekanismen är däremot välkänd: glukagondelen ökar energiförbrukningen och fettförbränningen, vilket bildar värme.",
  why:"Kroppen går på högre varv i vila. Det är en del av hur retatrutid skiljer sig från Wegovy och Mounjaro.",
  when:"Många märker det mest de första dagarna efter dos och efter dosökning.",
  tips:["Klä dig i lager och sov svalt.","Drick mer och få i dig lite salt om du svettas.","Logga vallningarna tillsammans med puls och sömn, de hänger ofta ihop."],
  care:["Feber eller frossa","Svettningar tillsammans med hjärtklappning, yrsel eller bröstsmärta"],src:[16]},
-{id:"pulse",name:"Förhöjd puls",ev:"study",phase:["rise","peak"],short:"Högre vilopuls, känner hjärtat slå",
+{id:"pulse",cat:"hjarta",name:"Förhöjd puls",ev:"study",phase:["rise","peak"],short:"Högre vilopuls, känner hjärtat slå",
  research:"Fas 2-studien visade en dosberoende pulsökning som var störst runt vecka 24 och sedan minskade. Ökningen är större än för Mounjaro och Wegovy. Oregelbundna hjärtslag rapporterades hos 2–11 % mot cirka 2 % på placebo, och inga av dem klassades som allvarliga.",
  why:"Glukagonreceptorn höjer energiförbrukningen i vila, vilket brukar ge högre puls.",
  when:"Följer ofta dosen och dosnivån. Kan vara mer märkbart första halvåret.",
  tips:["Följ vilopulsen i klockan på morgonen, samma tid varje dag.","Dra ner på koffein och nikotin.","Drick ordentligt. Uttorkning höjer pulsen."],
  care:["Hjärtklappning som inte går över eller känns oregelbunden","Bröstsmärta, svimning, kraftig yrsel eller andfåddhet"],src:[6,9,5]},
-{id:"energy",name:"Energipåslag och rastlöshet",ev:"report",phase:["rise"],short:"Uppvarvad, stressad, svårt att varva ner",
+{id:"energy",cat:"somn",name:"Energipåslag och rastlöshet",ev:"report",phase:["rise"],short:"Uppvarvad, stressad, svårt att varva ner",
  research:"Ökad energi är en av de vanligaste rapporterna bland användare utanför studierna, men det är inte beskrivet som en biverkning i de publicerade studierna.",
  why:"Högre ämnesomsättning och puls kan kännas som ett energipåslag. Mindre mat kan också ge en uppvarvad känsla.",
  when:"Ofta dagarna efter dos.",
  tips:["Använd energin dagtid: promenad eller träning tidigt.","Lägg en fast nedvarvningsrutin på kvällen.","Se till att du äter tillräckligt, även om du inte är hungrig."],
  care:["Ångest, panikkänsla eller tankar som skenar","Energipåslag tillsammans med hjärtklappning"],src:[8]},
-{id:"nausea",name:"Illamående",ev:"study",phase:["rise","esc"],short:"Den vanligaste biverkningen",
+{id:"nausea",cat:"mage",name:"Illamående",ev:"study",phase:["rise","esc"],short:"Den vanligaste biverkningen",
  research:"Illamående är vanligast av alla biverkningar. I TRIUMPH-1 hade 28,6 % (4 mg), 38,4 % (9 mg) och 42,4 % (12 mg) det, mot 14,8 % på placebo. Det var oftast milt till måttligt och kom främst under upptrappningen.",
  why:"Magsäcken töms långsammare och mättnadssignalerna i hjärnan förstärks.",
  when:"Dag 0–2 efter dos och veckorna efter en dosökning. Brukar lätta efter några veckor på samma dos.",
  tips:["Små portioner, och sluta vid första mättnadskänslan.","Undvik fet och stekt mat de första dagarna efter dos.","Ingefära eller pepparmynta, och luta dig inte bakåt direkt efter maten."],
  care:["Du kan inte behålla vätska på ett dygn","Kraftig magsmärta, särskilt om den strålar mot ryggen"],src:[15,6,7]},
-{id:"stomach",name:"Magproblem: diarré",ev:"study",phase:["rise","peak","esc"],short:"Lös mage, kurrande, gaser",
+{id:"stomach",cat:"mage",name:"Magproblem: diarré",ev:"study",phase:["rise","peak","esc"],short:"Lös mage, kurrande, gaser",
  research:"I TRIUMPH-1 hade 25–34 % diarré beroende på dos, mot 13,5 % på placebo. Liksom illamående kom det mest under upptrappningen.",
  why:"Ändrad tarmrörelse och matsmältning när magsäcken töms långsammare.",
  when:"Vanligast första veckorna och efter dosökning.",
  tips:["Drick extra och få i dig salt, till exempel buljong eller vätskeersättning.","Minska fett och mycket fiber tillfälligt."],
  care:["Blod i avföringen eller feber","Tecken på uttorkning eller diarré mer än 2–3 dagar"],src:[15]},
-{id:"constipation",name:"Magproblem: förstoppning",ev:"study",phase:["peak","low"],short:"Trög mage, hård avföring, uppblåst",
+{id:"constipation",cat:"mage",name:"Magproblem: förstoppning",ev:"study",phase:["peak","low"],short:"Trög mage, hård avföring, uppblåst",
  research:"Cirka 24–26 % fick förstoppning i TRIUMPH-1, mot 10,9 % på placebo.",
  why:"Långsammare tarm, mindre mat och ofta för lite vätska.",
  when:"Kommer ofta lite senare i veckan än illamåendet.",
  tips:["Drick enligt schema, inte efter törst.","Öka fibrer gradvis och ta en daglig promenad.","Fråga på apoteket om receptfria medel om det inte släpper."],
  care:["Ingen avföring på flera dagar tillsammans med kräkning eller svullen, öm mage"],src:[15]},
-{id:"vomit",name:"Kräkningar",ev:"study",phase:["rise","esc"],short:"Kräks efter mat eller utan förvarning",
+{id:"vomit",cat:"mage",name:"Kräkningar",ev:"study",phase:["rise","esc"],short:"Kräks efter mat eller utan förvarning",
  research:"Runt en fjärdedel kräktes vid högsta dosen i TRIUMPH-1. Vid lägre doser var det betydligt ovanligare.",
  why:"Samma mekanism som illamående, ofta när man ätit mer än magen hinner med.",
  when:"Främst vid dosökning och dagarna efter dos.",
  tips:["Mindre portioner, ät långsamt.","Ersätt vätska och salt efter varje kräkning."],
  care:["Upprepade kräkningar eller du kan inte behålla vätska","Kräkning med svår buksmärta"],src:[15]},
-{id:"reflux",name:"Halsbränna och rapningar",ev:"study",phase:["rise","peak"],short:"Sura uppstötningar, rapningar, matsmältningsbesvär",
+{id:"reflux",cat:"mage",name:"Halsbränna och rapningar",ev:"study",phase:["rise","peak"],short:"Sura uppstötningar, rapningar, matsmältningsbesvär",
  research:"Matsmältningsbesvär (dyspepsi) fanns bland de vanliga mag-tarmbiverkningarna i fas 2-studien.",
  why:"Maten ligger kvar längre i magsäcken.",
  tips:["Ät inte de sista 3 timmarna före sänggåendet.","Höj huvudänden på sängen.","Mindre kolsyra och fet mat."],
  care:["Svårt att svälja eller smärta bakom bröstbenet"],src:[17]},
-{id:"drymouth",name:"Torr mun och törst",ev:"report",phase:["peak"],short:"Torr mun, klibbig känsla, törstig",
+{id:"drymouth",cat:"mat",name:"Torr mun och törst",ev:"report",phase:["peak"],short:"Torr mun, klibbig känsla, törstig",
  research:"Torr mun är inte en tydligt redovisad biverkning för retatrutid. För GLP-1-läkemedel i stort finns forskning som visar att man dricker mindre, oberoende av aptiten.",
  why:"Törstsignalen dämpas, du äter mindre (och får mindre vätska via maten) och eventuellt illamående gör att du dricker mindre.",
  when:"Ofta en bit in i veckan när du ätit och druckit mindre några dagar.",
  tips:["Drick enligt schema, till exempel ett glas varje timme dagtid.","Sockerfritt tuggummi eller sugtabletter. Torr mun ökar risken för karies.","Kolla urinens färg: ljusgul är målet."],
  care:["Yrsel, mörk urin eller att du kissar mycket lite","Muntorrhet som inte går över trots att du dricker"],src:[13,12]},
-{id:"hunger",name:"Ökad hunger på morgonen",ev:"report",phase:["low","start"],short:"Hungrig, sug, matbrus, särskilt före nästa dos",
+{id:"hunger",cat:"mat",name:"Ökad hunger på morgonen",ev:"report",phase:["low","start"],short:"Hungrig, sug, matbrus, särskilt före nästa dos",
  research:"Med veckodoser är nivån i kroppen lägst dagarna innan nästa dos, och många märker att hungern kommer tillbaka då. I början har läkemedlet inte hunnit byggas upp. Med en halveringstid runt 6 dagar tar det ungefär 4–5 veckor på samma dos att nå en stabil nivå. Ökad aptit är faktiskt den vanligaste rapporten bland användare utanför studierna.",
  why:"Låg dos och låg nivå ger svagare aptitdämpning. Efter en natt utan mat är blodsockret och hungersignalerna naturligt högre.",
  when:"Mest märkbart de första veckorna och dagarna innan nästa dos.",
  tips:["Proteinrik frukost (ägg, kvarg, skyr) håller hungern borta längre.","Drick ett stort glas vatten först. Törst förväxlas lätt med hunger.","Hunger i början betyder inte att det inte fungerar."],
  care:["Kraftig hunger med darrighet, svettning och yrsel (kan vara lågt blodsocker, särskilt om du har diabetesmedicin)"],src:[11,0,8]},
-{id:"appetite",name:"Ingen aptit, glömmer att äta",ev:"study",phase:["rise","peak"],short:"Blir mätt direkt, äter för lite",
+{id:"appetite",cat:"mat",name:"Ingen aptit, glömmer att äta",ev:"study",phase:["rise","peak"],short:"Blir mätt direkt, äter för lite",
  research:"Minskad aptit är själva huvudeffekten. Risken är att proteinet och vätskan också sjunker, vilket kan påverka muskler, energi och mage.",
  why:"GLP-1 och GIP dämpar hunger och matbrus i hjärnan.",
  when:"Starkast dagarna efter dos.",
  tips:["Sätt ett proteinmål per måltid istället för att äta efter hunger.","Ät på fasta tider även utan hunger.","Drickbart protein är lättare när maten tar emot."],
  care:["Du går ner väldigt snabbt, känner dig svag eller svimfärdig"],src:[14]},
-{id:"fatigue",name:"Trötthet",ev:"study",phase:["peak","low"],short:"Orkeslös, tung i kroppen",
+{id:"fatigue",cat:"somn",name:"Trötthet",ev:"study",phase:["peak","low"],short:"Orkeslös, tung i kroppen",
  research:"Trötthet rapporterades oftare vid högre doser i TRIUMPH-1. Det brukar avta med tiden.",
  why:"Mindre energi in, ändrad ämnesomsättning, ibland sämre sömn och för lite vätska.",
  tips:["Kontrollera protein, vätska och sömn först.","Kort promenad i dagsljus hjälper ofta mer än vila."],
  care:["Tröttheten är kraftig eller håller i sig länge","Du blir andfådd vid små ansträngningar"],src:[3,14]},
-{id:"dizzy",name:"Yrsel",ev:"study",phase:["peak"],short:"Snurrar när du reser dig, lätt i huvudet",
+{id:"dizzy",cat:"hjarta",name:"Yrsel",ev:"study",phase:["peak"],short:"Snurrar när du reser dig, lätt i huvudet",
  research:"Lågt blodtryck var vanligare med retatrutid än placebo i TRIUMPH-1, och yrsel rapporterades oftare vid högre doser.",
  why:"Blodtrycket sjunker när vikten går ner, och för lite vätska förstärker det.",
  tips:["Res dig långsamt, särskilt på morgonen.","Drick ordentligt och få i dig lite salt."],
  care:["Du svimmar eller nästan svimmar","Du tar blodtrycksmedicin och blir yr. Prata med läkaren"],src:[3]},
-{id:"uti",name:"Sveda när du kissar",ev:"study",phase:[],short:"Kan vara urinvägsinfektion",
+{id:"uti",cat:"ovrigt",name:"Sveda när du kissar",ev:"study",phase:[],short:"Kan vara urinvägsinfektion",
  research:"Urinvägsinfektion var en ny signal i TRIUMPH-1: 7,5–8,8 % mot 5,3 % på placebo, nästan uteslutande hos kvinnor. Infektionerna var milda till måttliga.",
  why:"Orsaken är inte klarlagd. Mindre vätska kan bidra.",
  tips:["Drick mer och gå på toa ofta.","Kissa efter samlag."],
  care:["Sveda, täta trängningar eller blod i urinen","Feber, frossa eller ont i ryggen/flanken"],src:[2]},
-{id:"headache",name:"Huvudvärk",ev:"report",phase:["peak","esc"],short:"Tryck eller värk i huvudet",
+{id:"headache",cat:"somn",name:"Huvudvärk",ev:"report",phase:["peak","esc"],short:"Tryck eller värk i huvudet",
  research:"Inte en framträdande biverkning i studierna. Huvudvärk hänger ofta ihop med för lite vätska, salt eller mat.",
  why:"Uttorkning och lågt energiintag är de vanligaste orsakerna.",
  tips:["Ett stort glas vatten och något salt först.","Ät något, även om aptiten är låg."],
  care:["Plötslig, mycket kraftig huvudvärk","Huvudvärk med synpåverkan, nackstelhet eller feber"],src:[12]},
-{id:"hair",name:"Håravfall",ev:"report",phase:[],short:"Mer hår i borsten",
+{id:"hair",cat:"kropp",name:"Håravfall",ev:"report",phase:[],short:"Mer hår i borsten",
  research:"Tillfälligt håravfall är känt vid snabb viktnedgång i allmänhet och brukar visa sig några månader in. Det går oftast tillbaka.",
  why:"Kroppen prioriterar ner hårväxt vid snabb viktnedgång och lågt intag.",
  tips:["Håll proteinintaget uppe.","Ha tålamod: det brukar vända inom några månader."],
  care:["Fläckvis håravfall eller väldigt kraftigt håravfall"],src:[]},
-{id:"site",name:"Rodnad vid sticket",ev:"study",phase:["rise"],short:"Rodnad, klåda eller knöl där du injicerat",
+{id:"site",cat:"kropp",name:"Rodnad vid sticket",ev:"study",phase:["rise"],short:"Rodnad, klåda eller knöl där du injicerat",
  research:"Reaktioner vid injektionsstället har rapporterats i fas 2-studierna.",
  why:"Lokal reaktion i huden.",
  tips:["Rotera mellan mage, lår och arm. Appen föreslår nästa ställe.","Låt huden torka efter sprit innan du sticker."],
- care:["Rodnaden växer, blir varm och öm, eller du får feber","Svullnad i ansiktet eller andningsbesvär: ring 112"],src:[14]}
+ care:["Rodnaden växer, blir varm och öm, eller du får feber","Svullnad i ansiktet eller andningsbesvär: ring 112"],src:[14]},
+{id:"sulfur",cat:"mage",name:"Svavelrapningar",ev:"report",phase:["rise","peak"],short:"Rapningar som luktar ruttna ägg",
+ research:"Svavelrapningar finns inte med som biverkning i studierna, men det är en av de vanligaste sakerna användare av GLP-1-läkemedel berättar om. Det brukar bli bättre med tiden.",
+ why:"Maten ligger längre i magsäcken. Bakterier hinner jäsa den och bildar svavelväte, som ger lukten.",
+ when:"Oftast dagarna efter dos och efter stora eller proteinrika måltider.",
+ tips:["Ät mindre portioner och vänta med nästa måltid tills du känner dig tom.","Notera vad du ätit. Ägg, rött kött och sötningsmedel nämns ofta.","Drick vatten eller pepparmyntste mellan måltiderna."],
+ care:["Rapningarna kommer tillsammans med kräkningar, diarré eller kraftig magsmärta"],src:[21]},
+{id:"bloat",cat:"mage",name:"Uppblåsthet och gaser",ev:"report",phase:["rise","peak"],short:"Spänd mage, gaser, tryck",
+ research:"Uppblåsthet nämns ofta av användare. I studierna redovisas främst illamående, diarré, förstoppning och kräkningar, och uppblåsthet hänger ihop med samma mekanism.",
+ why:"Magsäck och tarm töms långsammare, så gas och mat stannar kvar längre.",
+ tips:["Undvik kolsyrat och sötningsmedel som sorbitol och xylitol.","Ät långsamt och tugga ordentligt.","En kort promenad efter maten hjälper tarmen."],
+ care:["Svullen, hård och öm mage tillsammans med kräkningar eller ingen avföring"],src:[15]},
+{id:"gall",cat:"mage",name:"Smärta under höger revben",ev:"report",phase:[],short:"Kan vara gallan, särskilt efter fet mat",
+ research:"Snabb viktnedgång ökar risken för gallsten, och gallbesvär är känt för GLP-1-läkemedel som grupp. Det finns ännu ingen säker siffra för hur vanligt det är med retatrutid.",
+ why:"Vid snabb viktnedgång ändras gallans sammansättning och gallblåsan töms mer sällan, vilket gynnar gallsten.",
+ when:"Ofta efter en fet måltid, och oftare efter några månader med snabb viktnedgång.",
+ tips:["Ät regelbundna måltider, så töms gallblåsan oftare.","Undvik riktigt feta måltider.","Notera när smärtan kommer och hur länge den håller i sig."],
+ care:["Smärtan håller i sig mer än några timmar","Feber, frossa eller gulfärgad hud och ögon","Mörk urin eller ljus avföring"],src:[20]},
+{id:"cold",cat:"kropp",name:"Fryser lätt",ev:"user",phase:["low"],short:"Kalla händer och fötter, fryser inomhus",
+ research:"Att frysa mer är vanligt vid snabb viktnedgång och något användare ofta berättar om. Det finns inte med som biverkning i studierna. Det kan kännas motsägelsefullt, eftersom glukagondelen snarare höjer värmeproduktionen, och en del växlar mellan värmevallningar och frusenhet.",
+ why:"Mindre mat ger mindre värme från matsmältningen, och mindre fettvävnad isolerar sämre.",
+ when:"Ofta senare i behandlingen och dagar när du ätit lite.",
+ tips:["Ät regelbundet, även små mål. Matsmältningen värmer.","Klä dig i lager och håll fötterna varma.","Logga både frusenhet och värme, så ser du om de följer dosdagarna."],
+ care:["Du fryser mycket och samtidigt är trött, går upp i vikt eller får torr hud (kan vara sköldkörteln)","Du blir blek, andfådd eller yr (kan vara blodbrist)"],src:[]},
+{id:"chills",cat:"kropp",name:"Influensakänsla efter dos",ev:"user",phase:["rise"],short:"Frossa, värk och seghet dagen efter sticket",
+ research:"Många användare beskriver en lätt influensakänsla dagen efter dos, med frossa, kroppsvärk och trötthet. Det är inte beskrivet i studierna och mekanismen är okänd.",
+ why:"En möjlig förklaring är kroppens reaktion när nivån stiger snabbt, i kombination med lite mat och vätska.",
+ when:"Dag 0–1, oftare efter dosökning.",
+ tips:["Drick extra och ät något lätt även om aptiten är borta.","Testa att ta dosen på kvällen så att du sover dig igenom det värsta.","Logga det, så ser du om det försvinner efter några veckor på samma dos."],
+ care:["Riktig feber över 38 grader","Symtomen håller i sig mer än ett par dagar eller blir värre"],src:[]},
+{id:"dryskin",cat:"kropp",name:"Torr hud och läppar",ev:"user",phase:["peak"],short:"Fnasig hud, spruckna läppar",
+ research:"Torr hud och torra läppar är något användare ofta nämner. Det hänger troligen ihop med att man dricker och äter mindre, och med mindre fett i kosten.",
+ why:"Mindre vätska och mindre fett i maten, och ibland mindre av vissa vitaminer.",
+ tips:["Drick enligt schema.","Mjukgörande kräm direkt efter duschen och läppbalsam.","Få i dig fett från fisk, nötter och olja även när du äter lite."],
+ care:["Utslag, blåsor eller klåda som inte går över"],src:[]},
+{id:"cramp",cat:"kropp",name:"Kramp i vaderna",ev:"user",phase:["peak"],short:"Kramp, ofta på natten",
+ research:"Muskelkramp finns inte med som biverkning i studierna. Det hänger ofta ihop med för lite vätska och salter, särskilt efter diarré eller mycket svettning.",
+ why:"När man äter och dricker mindre får man också mindre salt, kalium och magnesium.",
+ tips:["Drick mer och få i dig lite salt, till exempel buljong.","Stretcha vaderna innan du lägger dig.","Banan, nötter och mejeriprodukter ger kalium och magnesium."],
+ care:["Kramp tillsammans med hjärtklappning, muskelsvaghet eller förvirring"],src:[12]},
+{id:"muscle",cat:"kropp",name:"Svagare muskler",ev:"report",phase:[],short:"Tappar styrka, orkar mindre på gymmet",
+ research:"Vid snabb viktnedgång försvinner en del av vikten som muskler, inte bara fett. Hur stor andelen blir med retatrutid är en öppen fråga i forskningen.",
+ why:"Kroppen bryter ner muskler när energin och proteinet inte räcker och musklerna inte används.",
+ when:"Gradvis, över veckor och månader.",
+ tips:["Sikta på protein vid varje måltid.","Styrketräna 2–3 gånger i veckan. Även lätt träning räknas.","Mät midja och styrka, inte bara vikt."],
+ care:["Plötslig muskelsvaghet eller muskelsmärta utan förklaring"],src:[]},
+{id:"fog",cat:"somn",name:"Hjärndimma",ev:"user",phase:["peak","low"],short:"Svårt att koncentrera sig, glömsk, seg i huvudet",
+ research:"Hjärndimma är något användare berättar om, ofta tillsammans med trötthet. Det finns inte med i studierna.",
+ why:"För lite energi, kolhydrater eller vätska, och sämre sömn, påverkar koncentrationen.",
+ tips:["Ät en ordentlig frukost med både protein och kolhydrater.","Drick ett stort glas vatten och ta en kort promenad.","Jämför med din sömnlogg, de hänger ofta ihop."],
+ care:["Förvirring, svårt att hitta ord eller domningar som kommer plötsligt: ring 112"],src:[]},
+{id:"dreams",cat:"somn",name:"Livliga drömmar",ev:"user",phase:["rise"],short:"Starka, märkliga eller oroliga drömmar",
+ research:"Livliga och märkliga drömmar rapporteras av en del användare, ofta samma nätter som sömnen blir sämre. Det finns inte med i studierna.",
+ why:"Lättare och mer avbruten sömn gör att man oftare vaknar mitt i drömmar och minns dem.",
+ tips:["Logga drömmarna under sömn så ser du om de följer dosdagarna.","Svalt sovrum och ingen stor måltid sent på kvällen."],
+ care:["Mardrömmar eller ångest som påverkar hur du mår på dagen"],src:[8]},
+{id:"libido",cat:"somn",name:"Ändrad sexlust",ev:"user",phase:[],short:"Mer eller mindre lust än vanligt",
+ research:"Användare beskriver förändringar åt båda hållen. Viktnedgång kan höja lusten genom bättre energi, självkänsla och hormonbalans, medan trötthet och lite mat kan sänka den. Det finns inga studiedata för retatrutid.",
+ why:"Hormoner förändras när vikten går ner, och energi och humör spelar stor roll.",
+ tips:["Logga det om du vill se om det följer veckan eller vikten.","Kontrollera sömn och kost om lusten försvunnit."],
+ care:["Erektionsproblem eller kraftiga förändringar som oroar dig"],src:[]},
+{id:"mood",cat:"somn",name:"Humörsvängningar eller nedstämdhet",ev:"user",phase:[],short:"Lättirriterad, låg, känslomässigt platt",
+ research:"Det finns ingen säker kunskap om hur retatrutid påverkar humöret. Användare beskriver ibland att de känner sig platta, eftersom mat inte längre ger samma tröst eller glädje.",
+ why:"Lågt energiintag, sämre sömn och att matens belöning dämpas kan påverka humöret.",
+ tips:["Kontrollera sömn, protein och att du äter tillräckligt.","Rör på dig ute i dagsljus.","Prata med någon du litar på om hur du mår."],
+ care:["Nedstämdheten håller i sig mer än två veckor","Tankar på att skada dig själv: ring 1177, Mind Självmordslinjen 90101 eller 112 vid akut fara"],src:[]},
+{id:"taste",cat:"mat",name:"Ändrad smak och matavsmak",ev:"user",phase:["rise","peak"],short:"Mat smakar annorlunda, äcklas av vissa saker",
+ research:"Att maten smakar annorlunda och att man plötsligt tycker illa om viss mat är vanligt bland användare av GLP-1-läkemedel. Det är inte en framträdande biverkning i retatrutidstudierna.",
+ why:"GLP-1-receptorer finns i hjärnans belöningssystem. Illamående kan också koppla ihop vissa maträtter med obehag.",
+ tips:["Hitta proteinkällor som fortfarande smakar bra och håll dig till dem en tid.","Kall mat luktar mindre och är ofta lättare när du mår illa.","Notera vilken mat du tappat suget efter."],
+ care:["Du äter så lite att du blir svag, yr eller går ner väldigt snabbt"],src:[]},
+{id:"salt",cat:"mat",name:"Sug efter salt eller sött",ev:"user",phase:["low"],short:"Plötsligt sug efter chips, buljong eller godis",
+ research:"Användare beskriver ibland ett tydligt saltsug, och det kan vara kroppens signal om att du fått för lite salt och vätska. Sötsug brukar komma när nivån i kroppen är låg inför nästa dos.",
+ why:"Mindre mat ger mindre salt. Diarré och svettning tar också med sig salt.",
+ tips:["Buljong eller lättsaltade nötter är bättre än chips.","Möt sötsug med protein och frukt.","Jämför med var du är i veckan, sug kommer ofta dag +5 och +6."],
+ care:["Saltsug tillsammans med yrsel, kraftig trötthet eller muskelsvaghet"],src:[11]},
+{id:"alcohol",cat:"mat",name:"Tål alkohol sämre",ev:"user",phase:["rise","peak"],short:"Blir full fortare, mår sämre efteråt, mindre sug",
+ research:"Många som tar GLP-1-läkemedel säger att suget efter alkohol minskar. Det finns inga interaktionsdata för retatrutid. Alkohol kan förvärra magbesvär och, för den som tar diabetesmedicin, öka risken för lågt blodsocker.",
+ why:"Med mindre mat i magen tas alkoholen upp snabbare, och lägre vikt ger högre promille per glas.",
+ tips:["Ät något innan och drick vatten mellan glasen.","Räkna med att du tål mindre än förut.","Undvik alkohol dagarna efter dos om du mår illa."],
+ care:["Kraftig magsmärta efter alkohol (kan vara bukspottkörteln)","Darrighet, svettning och förvirring om du tar diabetesmedicin"],src:[19]},
+{id:"hypo",cat:"ovrigt",name:"Darrig, svettig och svag",ev:"study",phase:[],short:"Kan vara lågt blodsocker",
+ research:"I fas 2-studien på personer utan diabetes sågs inget kliniskt betydelsefullt lågt blodsocker. Risken ökar om man samtidigt tar insulin eller sulfonylureider.",
+ why:"Retatrutid ökar insulinet när blodsockret är högt. Tillsammans med andra blodsockersänkande läkemedel, eller mycket lite mat, kan blodsockret sjunka för lågt.",
+ tips:["Ät något med snabba kolhydrater, som juice eller druvsocker, och sedan ett mål med protein.","Hoppa inte över flera måltider i rad.","Har du en blodsockermätare: mät."],
+ care:["Du tar insulin eller annan diabetesmedicin och får symtomen. Kontakta din läkare om doserna","Förvirring, kramper eller medvetslöshet: ring 112"],src:[20,19]},
+{id:"pill",cat:"ovrigt",name:"P-piller och mens",ev:"report",phase:["esc"],short:"Oregelbunden mens, osäker på om p-piller skyddar",
+ research:"Det finns inga godkända interaktionsdata för retatrutid. Eftersom magsäcken töms långsammare kan upptaget av p-piller påverkas. För det godkända läkemedlet tirzepatid (Mounjaro) rekommenderas extra preventivmedel i fyra veckor efter start och efter varje dosökning. Viktnedgång i sig kan också ändra mensen och öka fertiliteten.",
+ why:"Långsammare magtömning, och kräkningar eller diarré, kan göra att p-pillret tas upp sämre.",
+ tips:["Använd kondom som extra skydd fyra veckor efter start och efter varje dosökning.","Har du kräkts inom några timmar efter pillret: följ bipacksedelns råd om missad tablett.","Logga mensen som anteckning, så ser du om den ändras."],
+ care:["Du kan vara gravid. Retatrutid är inte studerat under graviditet, prata med vården direkt","Mycket kraftiga eller uteblivna blödningar"],src:[19]},
+{id:"noise",cat:"pos",name:"Mindre matbrus",ev:"study",phase:[],short:"Tänker mindre på mat, lättare att sluta äta",
+ research:"Minskad aptit och mindre tankar på mat är huvudeffekten. I TRIUMPH-1 gick deltagarna i snitt ner 17,6 % (4 mg), 23,7 % (9 mg) och 25 % (12 mg) efter 80 veckor, mot 3,9 % på placebo.",
+ why:"GLP-1 och GIP påverkar hunger- och belöningscentra i hjärnan, och magen känns full längre.",
+ when:"Starkast dagarna efter dos. Blir jämnare när nivån byggts upp efter 4–5 veckor på samma dos.",
+ tips:["Logga det med styrka, så ser du hur effekten följer dosdagarna.","Använd lugnet till att bygga nya vanor kring mat."],
+ care:["Du slutar äta nästan helt eller går ner väldigt snabbt"],src:[18]},
+{id:"joints",cat:"pos",name:"Mindre ont i lederna",ev:"study",phase:[],short:"Knän och höfter känns lättare",
+ research:"I TRIUMPH-1 fanns en delstudie på personer med knäartros. Smärtan minskade tydligt mer med retatrutid än med placebo, och Lilly rapporterade upp till 73 % minskad knäsmärta.",
+ why:"Mindre vikt belastar lederna mindre.",
+ when:"Gradvis, i takt med att vikten går ner.",
+ tips:["Passa på att öka promenader och styrketräning när det gör mindre ont.","Logga det, så ser du utvecklingen över månader."],
+ care:["Du tar smärtstillande regelbundet och vill minska dosen"],src:[18,22]},
+{id:"snore",cat:"pos",name:"Mindre snarkning",ev:"study",phase:[],short:"Snarkar mindre, piggare på morgonen",
+ research:"I TRIUMPH-1 fanns en delstudie på personer med måttlig till svår sömnapné. Antalet andningsuppehåll minskade med 23–34 per timme, mot 10 på placebo.",
+ why:"Mindre fett runt hals och svalg gör att luftvägarna håller sig öppna bättre.",
+ when:"Gradvis, i takt med att vikten går ner.",
+ tips:["Har du CPAP: fortsätt använda den tills läkaren sagt något annat.","Fråga den du delar säng med om snarkningen ändrats."],
+ care:["Du har sömnapné och vill ändra behandlingen. Gör det tillsammans med läkaren"],src:[18,22]},
+{id:"bp",cat:"pos",name:"Lägre blodtryck",ev:"study",phase:[],short:"Lägre värden på mätaren",
+ research:"I fas 2-studien sjönk blodtrycket tydligt. I TRIUMPH-1 var lågt blodtryck vanligare med retatrutid, särskilt vid högre doser och hos dem som redan tog blodtrycksmedicin.",
+ why:"Viktnedgång sänker blodtrycket.",
+ tips:["Mät hemma ibland, samma tid på dygnet.","Res dig långsamt om du blir yr."],
+ care:["Du tar blodtrycksmedicin och blir yr eller får låga värden. Dosen kan behöva ses över"],src:[18,17]},
+{id:"liver",cat:"pos",name:"Bättre blodsocker och mindre leverfett",ev:"study",phase:[],short:"Det som syns i blodprover",
+ research:"Fas 2-studierna visade förbättrat blodsocker, långtidssocker och blodfetter, och en delstudie visade kraftigt minskat leverfett. I TRANSCEND-T2D-1 sänktes långtidssockret (HbA1c) med upp till 2,0 procentenheter hos personer med typ 2-diabetes.",
+ why:"Glukagondelen ökar fettförbränningen i levern, och viktnedgången förbättrar insulinkänsligheten.",
+ tips:["Be om blodprov före start och efter några månader, så kan du följa förändringen.","Logga resultaten som anteckning här."],
+ care:["Du tar diabetesmedicin. Blodsockersänkningen kan kräva ändrade doser"],src:[18,22]},
+{id:"energyup",cat:"pos",name:"Mer ork i vardagen",ev:"user",phase:[],short:"Lättare att röra sig, orkar mer",
+ research:"Många användare beskriver att de orkar mer när vikten gått ner en bit, även om de första veckorna kan vara tunga. Det finns inte som mätt utfall i studierna.",
+ why:"Mindre vikt att bära, bättre sömn och stabilare blodsocker.",
+ tips:["Logga det, särskilt dagar du gjort något du inte orkat förut.","Höj stegmålet lite i taget."],
+ care:["Energin svänger kraftigt mellan uppvarvad och utmattad"],src:[]}
 ];
 const ALARM=["Svår, ihållande buksmärta, särskilt om den strålar mot ryggen (kan vara bukspottkörteln)","Smärta under höger revbensbåge, feber eller gulfärgad hud/ögon (gallan)","Du kan inte behålla vätska eller blir kraftigt uttorkad","Bröstsmärta, svimning eller hjärtklappning som inte går över","Svullnad i ansikte/svalg eller andningsbesvär"];
 
@@ -358,7 +490,7 @@ function vIdag(){
   <div class="section" style="gap:6px"><span class="eyebrow">Dagar sedan senaste dos · mörkgrön = idag</span><div class="week" aria-label="Dagar sedan senaste dos">${Array.from({length:7},(_,i)=>`<span class="${i===dd?"on":i<dd?"past":""}">${i===0?"Dos":"+"+i}</span>`).join("")}</div></div>
   <section class="panel"><span class="eyebrow">Vad händer i kroppen</span><h2>${ph.title}</h2><p>${ph.body}</p>${I.weeksAtDose<=4?`<p class="muted">Du är i vecka ${I.weeksAtDose} på ${num(I.last.mg,I.last.mg%1?1:0)} mg. Med en halveringstid runt 6 dagar byggs nivån upp under ungefär 4–5 veckor innan den blir stabil.</p>`:""}</section>
   <section class="section"><div><span class="eyebrow">Vanliga symptom just nu</span><p class="muted" style="font-size:.88rem">Utifrån var du är i veckan, studiernas mönster och det du själv loggat.</p></div>
-   <div class="slist">${list.map(l=>{const x=byId(l.id);return x?`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${esc(l.why)}</small></span><span class="ev ${x.ev}">${x.ev==="study"?"Studier":"Rapporter"}</span><span class="chev">›</span></button>`:""}).join("")}</div></section>
+   <div class="slist">${list.map(l=>{const x=byId(l.id);return x?`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${esc(l.why)}</small></span><span class="ev ${x.ev}">${EVSHORT[x.ev]}</span><span class="chev">›</span></button>`:""}).join("")}</div></section>
   ${tip?`<section class="panel"><span class="eyebrow">Dagens tips · ${tip.x.name}</span><p>${tip.t}</p></section>`:""}
   <section class="section"><span class="eyebrow">Hur mår du idag? Tryck för att logga</span>
    <div class="chips">${LIB.slice(0,14).map(x=>`<button class="chip ${todays.includes(x.id)?"on":""}" data-card="${x.id}">${x.name}</button>`).join("")}<button class="chip" data-tab="bibliotek">Fler…</button></div></section>
@@ -424,22 +556,26 @@ function vLogga(){
    <button class="btn" id="saveDose">Spara dos</button></section>
   <section class="panel"><h2>Doser</h2>${ds.length?`<div class="hist">${ds.map(d=>`<div><span>${fmtD(d.t)} <span class="muted">${fmtT(d.t)}</span></span><span class="mono">${num(d.mg,d.mg%1?2:0)} mg</span><span class="muted">${d.site||""}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-deldose="${d.t}">×</button>`}</div>`).join("")}</div>`:`<p class="muted">Inga doser loggade än.</p>`}</section>
   ${backupPanel()}
-  <section class="panel"><h2>Symptom</h2>${sy.length?`<div class="hist">${sy.map(s=>{const da=dayAfter(s.t,sorted(D.doses));return `<div><span><b>${byId(s.id)?.name||s.id}</b> <span class="muted">${fmtD(s.t)}${s.note?" · "+esc(s.note):""}</span></span><span class="mono muted">${da!=null?"+"+da:""}</span><span class="muted">${["","Lätt","Måttlig","Kraftig"][s.sev||1]}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-delsym="${s.t}|${s.id}">×</button>`}</div>`}).join("")}</div>`:`<p class="muted">Logga symptom från Idag eller Bibliotek.</p>`}</section>
+  <section class="panel"><h2>Symptom</h2>${sy.length?`<div class="hist">${sy.map(s=>{const da=dayAfter(s.t,sorted(D.doses));return `<div><span><b>${byId(s.id)?.name||s.id}</b> <span class="muted">${fmtD(s.t)}${s.note?" · "+esc(s.note):""}</span></span><span class="mono muted">${da!=null?"+"+da:""}</span><span class="muted">${(byId(s.id)?.cat==="pos"?["","Lite","Tydligt","Mycket"]:["","Lätt","Måttlig","Kraftig"])[s.sev||1]}</span>${demo?"":`<button class="x" aria-label="Ta bort" data-delsym="${s.t}|${s.id}">×</button>`}</div>`}).join("")}</div>`:`<p class="muted">Logga symptom från Idag eller Bibliotek.</p>`}</section>
   ${foot()}`;
 }
 
 let q="";
 function vBibliotek(){
   const f=LIB.filter(x=>!q||(x.name+" "+x.short).toLowerCase().includes(q.toLowerCase()));
-  return `<header class="section"><span class="eyebrow">${LIB.length} symptom</span><h1>Bibliotek</h1></header>
+  return `<header class="section"><span class="eyebrow">${LIB.length} symptom och effekter</span><h1>Bibliotek</h1></header>
   <input class="search" id="q" type="search" placeholder="Sök symptom, t.ex. hud, sömn, mage" value="${esc(q)}" aria-label="Sök symptom">
-  <div class="row"><span class="ev study">Visat i studier</span><span class="ev report">Rapporterat / trolig mekanism</span></div>
+  <div class="row"><span class="ev study">Visat i studier</span><span class="ev report">Rapporterat / trolig mekanism</span><span class="ev user">Användare berättar</span></div>
   <div class="slist" id="libList">${libItems(f)}</div>
   <section class="care"><h4>Sök vård direkt om</h4><ul>${ALARM.map(a=>`<li>${a}</li>`).join("")}</ul><p style="font-size:.9rem">Ring 1177 för råd. Ring 112 vid akut fara.</p></section>
   <section class="panel"><span class="eyebrow">Källor</span><ol class="srcs" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px">${SRC.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join("")}</ol></section>
   ${foot()}`;
 }
-function libItems(f){return f.map(x=>`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${x.short}</small></span><span class="ev ${x.ev}">${x.ev==="study"?"Studier":"Rapporter"}</span><span class="chev">›</span></button>`).join("")||`<p class="muted" style="padding:12px 0">Inget symptom matchar. Logga det ändå som anteckning under ett närliggande symptom.</p>`}
+function libItems(f){
+  if(!f.length) return `<p class="muted" style="padding:12px 0">Inget matchar. Logga det ändå som anteckning under något närliggande.</p>`;
+  return CATS.map(([c,l])=>{const g=f.filter(x=>x.cat===c); if(!g.length) return "";
+    return `<h3 class="cathead">${l}</h3>`+g.map(x=>`<button class="sitem" data-card="${x.id}"><span class="t"><b>${x.name}</b><small>${x.short}</small></span><span class="ev ${x.ev}">${EVSHORT[x.ev]}</span><span class="chev">›</span></button>`).join("")}).join("");
+}
 
 function backupPanel(){
   const lb=lastBackup(), old=!lb||Date.now()-lb>14*DAY;
@@ -468,10 +604,10 @@ function openCard(id){
    <div><h4>Varför det kan hända</h4><p>${x.why}</p></div>
    ${x.when?`<div><h4>När det brukar märkas</h4><p>${x.when}</p></div>`:""}
    <div><h4>Att testa</h4><ul>${x.tips.map(t=>`<li>${t}</li>`).join("")}</ul></div>
-   <div class="care"><h4>Hör av dig till vården om</h4><ul>${x.care.map(t=>`<li>${t}</li>`).join("")}</ul><p style="font-size:.88rem">1177 för råd, 112 vid akut fara.</p></div>
+   <div class="care"><h4>${x.cat==="pos"?"Prata med läkaren om":"Hör av dig till vården om"}</h4><ul>${x.care.map(t=>`<li>${t}</li>`).join("")}</ul><p style="font-size:.88rem">1177 för råd, 112 vid akut fara.</p></div>
    ${x.src.length?`<p class="srcs">Källor: ${x.src.map(i=>`<a href="${SRC[i][1]}" target="_blank" rel="noopener">${SRC[i][0]}</a>`).join(" · ")}</p>`:""}
    ${demo?`<p class="muted" style="font-size:.88rem">Logga en dos först för att kunna spara symptom.</p>`:`<div class="panel" style="background:var(--bg)"><h4>Logga idag</h4>
-    <div class="sev" id="sev">${["Lätt","Måttlig","Kraftig"].map((s,i)=>`<button data-sev="${i+1}" class="${i===0?"on":""}">${s}</button>`).join("")}</div>
+    <div class="sev" id="sev">${(x.cat==="pos"?["Lite","Tydligt","Mycket"]:["Lätt","Måttlig","Kraftig"]).map((s,i)=>`<button data-sev="${i+1}" class="${i===0?"on":""}">${s}</button>`).join("")}</div>
     <label for="note">Anteckning (valfritt)<input id="note" type="text" maxlength="140" placeholder="t.ex. vaknade 03:30"></label>
     <button class="btn" data-logsym="${x.id}">Logga ${x.name.toLowerCase()}</button></div>`}
   </div></div>`;
