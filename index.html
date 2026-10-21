@@ -903,11 +903,7 @@ const HORMONES={
 function hormoneSection(){
   return `<section class="section"><span class="eyebrow">Så fungerar retatrutid</span>
    <p class="muted" style="font-size:.9rem">Retatrutid härmar tre av kroppens egna hormoner. Tryck på ett för att se vad det gör och vilka symptom det kan förklara.</p>
-   <div class="horm">${Object.entries(HORMONES).map(([k,h])=>`<button class="hbtn" data-hormone="${k}"><b>${h.name}</b><span>${h.tag}</span></button>`).join("")}</div>
-   <div class="cmp" role="table" aria-label="Jämförelse mellan läkemedel">
-    <div class="cr ch" role="row"><span role="columnheader"></span><span role="columnheader">GLP-1</span><span role="columnheader">GIP</span><span role="columnheader">Glukagon</span></div>
-    ${[["Ozempic, Wegovy",1,0,0],["Mounjaro, Zepbound",1,1,0],["Retatrutid",1,1,1]].map(r=>`<div class="cr ${r[0]==="Retatrutid"?"me":""}" role="row"><span role="cell">${r[0]}</span>${r.slice(1).map(v=>`<span role="cell" class="${v?"y":"n"}" aria-label="${v?"Ja":"Nej"}">${v?"●":"–"}</span>`).join("")}</div>`).join("")}
-   </div></section>`;
+   <div class="horm">${Object.entries(HORMONES).map(([k,h])=>`<button class="hbtn" data-hormone="${k}"><b>${h.name}</b><span>${h.tag}</span></button>`).join("")}</div></section>`;
 }
 function openHormone(k){const h=HORMONES[k];if(!h)return;
   sheet(`${sheetHead(h.name)}<span class="eyebrow">${h.tag}</span>
