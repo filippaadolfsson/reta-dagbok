@@ -665,7 +665,7 @@ function vNiva(){
   <section class="panel"><span class="eyebrow">Så läser du kurvan</span>
    <p>Varje dos lägger sig ovanpå det som finns kvar från tidigare veckor. Därför stiger kurvan trappvis de första veckorna och planar sedan ut. Vid ${num(last.mg,last.mg%1?1:0)} mg i veckan landar toppen till slut runt <span class="mono">${num(ss)}</span> mg.</p>
    <p class="muted">Förenklad modell. Halveringstiden kommer från Lillys fas 1-data (cirka 6 dagar). Hur snabbt dosen tas upp från huden är ett antagande, och verkliga nivåer varierar mellan personer. Använd kurvan för att förstå mönster, inte för att bestämma doser.</p>
-   <label for="hl">Halveringstid i modellen (dagar)<input id="hl" type="number" min="3" max="10" step="0.5" value="${hl}"></label></section>
+   <label for="hl">Halveringstid i modellen (dagar)<input id="hl" type="text" inputmode="decimal" autocomplete="off" value="${String(hl).replace(".",",")}"></label></section>
   ${foot()}`;
 }
 function dLabel(d){return d===0?"på injektionsdagen":"dag +"+d+" efter injektionen"}
@@ -679,7 +679,7 @@ function vLogga(){
   <header class="section"><span class="eyebrow">Journal</span><h1>Logga</h1></header>
   <section class="panel"><h2>Ny dos</h2>
    <div class="grid2"><label for="dt">Datum och tid<input id="dt" type="datetime-local" value="${nowLocal}"></label>
-   <label for="mg">Dos (mg)<input id="mg" type="number" min="0" step="0.25" inputmode="decimal" value="${lastMg}" placeholder="t.ex. 2"></label></div>
+   <label for="mg">Dos (mg)<input id="mg" type="text" autocomplete="off" min="0" step="0.25" inputmode="decimal" value="${String(lastMg).replace(".",",")}" placeholder="t.ex. 0,5"></label></div>
    <span class="eyebrow">Injektionsställe · förslag: ${sug}</span>
    <div class="sites" id="sites">${SITES.map(s=>`<button class="site ${s===sug?"on tip":""}" data-site="${s}">${s}</button>`).join("")}</div>
    <p class="muted" style="font-size:.85rem">Förslaget är det ställe du använt längst tid sedan. Doserna är dina egna, enligt ditt schema eller din förskrivare.</p>
@@ -839,7 +839,7 @@ function manualProduct(code,name,offline){
   sheet(`${sheetHead("Fyll i produkten")}
    <p class="muted" style="font-size:.9rem">${offline?"Kunde inte nå databasen just nu.":"Produkten finns inte i databasen eller saknar proteinvärde."} Fyll i från förpackningen en gång, så känner appen igen streckkoden nästa gång.</p>
    <label for="mname">Namn<input id="mname" type="text" value="${esc(name)}" placeholder="t.ex. Kvarg vanilj"></label>
-   <div class="grid2"><label for="mp100">Protein per 100 g<input id="mp100" type="number" inputmode="decimal" step="0.1" placeholder="t.ex. 10"></label>
+   <div class="grid2"><label for="mp100">Protein per 100 g<input id="mp100" type="text" autocomplete="off" inputmode="decimal" step="0.1" placeholder="t.ex. 10"></label>
    <label for="msize">Förpackning i gram (valfritt)<input id="msize" type="number" inputmode="numeric" placeholder="t.ex. 500"></label></div>
    <button class="btn" id="msave" data-code="${code}">Fortsätt</button>`);
 }
@@ -913,7 +913,7 @@ function passPanel(D,dr){
    return `<div class="ex ${it.done?"done":""}"><div class="exh"><b>${i+1}. ${e.name}</b><a href="${vid(e)}" target="_blank" rel="noopener">Video</a></div>
     <small class="muted">${e.sets} × ${e.reps}${e.note?" · "+e.note:""}${l?" · förra: "+fmtVal(e,l):""}</small>
     <div class="exin ${e.time?"two":""}"><label for="r-${e.id}">${e.time?"Sekunder":"Reps"}<input id="r-${e.id}" data-exr="${e.id}" type="number" inputmode="numeric" value="${reps}" placeholder="${e.time?60:topRep(e)||""}"></label>
-    ${e.time?"":`<label for="k-${e.id}">Kg<input id="k-${e.id}" data-exk="${e.id}" type="number" inputmode="decimal" step="0.5" value="${kg}" placeholder="${e.opt?"0":""}"></label>`}
+    ${e.time?"":`<label for="k-${e.id}">Kg<input id="k-${e.id}" data-exk="${e.id}" type="text" autocomplete="off" inputmode="decimal" step="0.5" value="${kg}" placeholder="${e.opt?"0":""}"></label>`}
     <button class="okbtn ${it.done?"on":""}" data-exdone="${e.id}" aria-pressed="${!!it.done}">${it.done?"✓ Klar":"Klar"}</button></div></div>`}).join("")}
    <div class="ex ${dr.stairDone?"done":""}"><div class="exh"><b>Stairmaster</b></div><small class="muted">20 minuter</small>
     <div class="exin two"><label for="stair">Minuter<input id="stair" data-stair="1" type="number" inputmode="numeric" value="${dr.stair!=null&&dr.stair!==""?dr.stair:20}"></label><button class="okbtn ${dr.stairDone?"on":""}" data-stairdone="1" aria-pressed="${!!dr.stairDone}">${dr.stairDone?"✓ Klar":"Klar"}</button></div></div>
@@ -1117,12 +1117,12 @@ function vKostInner(){
   </section>
   <section class="panel"><span class="eyebrow">Vikt</span>
    ${Wt.length?`<div class="big"><span class="mono">${num(Wt[Wt.length-1].kg)}</span><span class="muted">kg</span></div>${Wt.length>1?`<p class="muted" style="font-size:.9rem">${num(Wt[Wt.length-1].kg-Wt[0].kg)} kg sedan ${fmtD(Wt[0].t)}</p><div class="chart">${weightChart(Wt)}</div>`:""}`:`<p class="muted">Ingen vikt loggad än.</p>`}
-   <div class="row"><input id="kg" type="number" inputmode="decimal" step="0.1" min="30" max="300" placeholder="Vikt i kg" aria-label="Vikt i kg" style="flex:1;width:auto"><button class="btn small" id="savekg">Spara</button></div>
+   <div class="row"><input id="kg" type="text" autocomplete="off" inputmode="decimal" step="0.1" min="30" max="300" placeholder="Vikt i kg" aria-label="Vikt i kg" style="flex:1;width:auto"><button class="btn small" id="savekg">Spara</button></div>
    ${Wt.length?`<div class="hist">${[...Wt].reverse().slice(0,5).map(w=>`<div><span>${fmtD(w.t)}</span><span class="mono">${num(w.kg)} kg</span>${demo?"":`<button class="x" aria-label="Ta bort" data-delkg="${w.t}">×</button>`}</div>`).join("")}</div>`:""}
   </section>
   <section class="panel"><span class="eyebrow">Mål</span>
    <div class="grid2"><label for="pf">Protein per kg<select id="pf">${[1.0,1.2,1.4,1.6].map(v=>`<option value="${v}" ${(s.proteinFactor||1.2)==v?"selected":""}>${num(v)} g per kg</option>`).join("")}</select></label>
-   <label for="gw">Räkna på vikt (valfritt)<input id="gw" type="number" inputmode="decimal" placeholder="${kg?"Nu: "+num(kg)+" kg":"t.ex. målvikt"}" value="${s.goalWeight||""}"></label>
+   <label for="gw">Räkna på vikt (valfritt)<input id="gw" type="text" autocomplete="off" inputmode="decimal" placeholder="${kg?"Nu: "+num(kg)+" kg":"t.ex. målvikt"}" value="${s.goalWeight||""}"></label>
    <label for="pm">Eget proteinmål i gram<input id="pm" type="number" inputmode="numeric" placeholder="Tomt = automatiskt" value="${s.proteinManual||""}"></label>
    <label for="sg">Stegmål<input id="sg" type="number" inputmode="numeric" value="${sgoal}"></label></div>
    <button class="btn ghost small" id="savegoals">Spara mål</button>
@@ -1262,7 +1262,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="snap"&&e.target.files[0]){decodeFile(e.target.files[0]);e.target.value="";return}
   if(e.target.id==="imp"&&e.target.files[0]){importData(e.target.files[0]);e.target.value="";return}
   if(e.target.id==="pdate"&&state.workoutDraft){state.workoutDraft.date=e.target.value;persist();return}
-  if(e.target.id==="hl"){const v=parseFloat(e.target.value);if(v>=3&&v<=10){state.settings.halfLife=v;if(!demo)persist();render()}}
+  if(e.target.id==="hl"){const v=parseFloat(String(e.target.value).replace(",","."));if(v>=3&&v<=10){state.settings.halfLife=v;if(!demo)persist();render()}}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCard()});
 boot();
