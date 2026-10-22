@@ -552,7 +552,7 @@ function info(){
   const D=data(), ds=sorted(D.doses), now=Date.now();
   if(!ds.length) return null;
   const last=ds[ds.length-1], first=ds[0];
-  const day=Math.floor((now-last.t)/DAY);
+  const day=calDays(last.t,now);
   const week=Math.floor((now-first.t)/(7*DAY))+1;
   let incAt=null; for(let i=1;i<ds.length;i++) if(ds[i].mg>ds[i-1].mg) incAt=ds[i].t;
   const sinceInc=incAt?Math.floor((now-incAt)/DAY):null;
@@ -561,7 +561,8 @@ function info(){
   const phase=day<=1?"rise":day<=4?"peak":"low";
   return {ds,last,day,week,phase,sinceInc,weeksAtDose,level:levelAt(now,ds,D.settings.halfLife||6)};
 }
-function dayAfter(t,ds){let l=null;for(const d of ds){if(d.t<=t)l=d;}return l?Math.floor((t-l.t)/DAY):null}
+function calDays(a,b){const A=new Date(a),B=new Date(b);A.setHours(0,0,0,0);B.setHours(0,0,0,0);return Math.round((B-A)/DAY)}
+function dayAfter(t,ds){let l=null;for(const d of ds){if(d.t<=t)l=d;}return l?calDays(l.t,t):null}
 function patterns(){
   const D=data(), ds=sorted(D.doses), m={};
   for(const s of D.symptoms){const d=dayAfter(s.t,ds); if(d==null||d>7)continue; (m[s.id]=m[s.id]||Array(8).fill(0))[d]++;}
